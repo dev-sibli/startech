@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<!--[if IE]><![endif]-->
+<!--[if IE 8 ]><html dir="{{ direction }}" lang="{{ lang }}" class="ie8"><![endif]-->
+<!--[if IE 9 ]><html dir="{{ direction }}" lang="{{ lang }}" class="ie9"><![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!-->
+<html dir="{{ direction }}" lang="{{ lang }}">
+<!--<![endif]-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>{{ title }}</title>
+<base href="{{ base }}" />
+{% if description %}
+<meta name="description" content="{{ description }}" />
+{% endif %}
+{% if keywords %}
+<meta name="keywords" content="{{ keywords }}" />
+{% endif %}
+<script src="catalog/view/javascript/jquery/jquery-3.7.1.min.js" type="text/javascript"></script>
+<link href="catalog/view/javascript/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen" />
+<script src="catalog/view/javascript/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+<link href="catalog/view/javascript/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+<link href="//fonts.googleapis.com/css?family=Open+Sans:400,400i,300,700" rel="stylesheet" type="text/css" />
+{# <link href="catalog/view/theme/default/stylesheet/stylesheet.css" rel="stylesheet"> #}
+<link href="/catalog/view/theme/dreamer/stylesheet/main.css" rel="stylesheet">
+{% for style in styles %}
+<link href="{{ style.href }}" type="text/css" rel="{{ style.rel }}" media="{{ style.media }}" />
+{% endfor %}
+{% for script in scripts %}
+<script src="{{ script }}" type="text/javascript"></script>
+{% endfor %}
+<script src="catalog/view/javascript/common.js" type="text/javascript"></script>
+{% for link in links %}
+<link href="{{ link.href }}" rel="{{ link.rel }}" />
+{% endfor %}
+{% for analytic in analytics %}
+{{ analytic }}
+{% endfor %}
+</head>
+
+<body>
+
+  <header class="header-main">
+    <div class="container">
+      <div class="header-inner">
+        <div class="logo-wrapper">
+          <div id="logo">
+            {% if logo %}
+            <a href="{{ home }}"><img src="{{ logo }}" title="{{ name }}" alt="{{ name }}" /></a>
+            {% else %}
+            <h1><a href="{{ home }}">{{ name }}</a></h1>
+            {% endif %}
+          </div>
+        </div>
+        <div class="search-wrapper">
+          {{ search }}
+        </div>
+        <div class="header-actions">
+          <div class="action-item">
+            <span class="icon"><i class="material-icons">card_giftcard</i></span>
+            <div class="info">
+              <span class="action-title">Offers</span>
+              <span class="action-subtitle">Latest Offers</span>
+            </div>
+          </div>
+          <div class="action-item">
+            <span class="icon"><i class="material-icons">flash_on</i></span>
+            <div class="info">
+              <span class="action-title">Happy Hour</span>
+              <span class="action-subtitle">Special Deals</span>
+            </div>
+          </div>
+          <a href="{{ account }}" class="action-item">
+            <span class="icon"><i class="material-icons">person</i></span>
+            <div class="info">
+              <span class="action-title">Account</span>
+              <span class="action-subtitle">Register or Login</span>
+            </div>
+          </a>
+          <a href="index.php?route=product/pc_builder" class="btn-pc-builder">PC Builder</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {{ menu }}
+
+  <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+      var toggleBtn = document.querySelector('.navbar-toggle');
+      var collapse = document.querySelector('.navbar-collapse');
+
+      if (toggleBtn && collapse) {
+        toggleBtn.addEventListener('click', function () {
+          collapse.classList.toggle('show');
+        });
+      }
+    });
+  </script>

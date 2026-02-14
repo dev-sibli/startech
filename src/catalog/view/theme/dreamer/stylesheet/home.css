@@ -1,0 +1,140 @@
+/* Homepage Specific Styles */
+
+/* Base Layout for Home */
+#content {
+    padding-bottom: 40px;
+}
+
+/* Custom Slideshow */
+.custom-slideshow-wrapper {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    aspect-ratio: 16 / 9;
+    /* Enforce aspect ratio to prevent jump, customizable */
+    max-height: 500px;
+}
+
+@media (min-width: 992px) {
+    .custom-slideshow-wrapper {
+        aspect-ratio: auto;
+        height: 480px;
+    }
+}
+
+.custom-slideshow-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.custom-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f2f5;
+}
+
+.custom-slide.active {
+    opacity: 1;
+    z-index: 2;
+}
+
+.custom-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Controls */
+.custom-slide-prev,
+.custom-slide-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 3;
+    transition: all 0.2s;
+    color: #333;
+    opacity: 0;
+    /* Hidden by default, show on hover */
+}
+
+.custom-slideshow-wrapper:hover .custom-slide-prev,
+.custom-slideshow-wrapper:hover .custom-slide-next {
+    opacity: 1;
+}
+
+.custom-slide-prev:hover,
+.custom-slide-next:hover {
+    background: #ef4a23;
+    color: #fff;
+}
+
+.custom-slide-prev {
+    left: 20px;
+}
+
+.custom-slide-next {
+    right: 20px;
+}
+
+.custom-slide-prev i,
+.custom-slide-next i {
+    font-size: 28px;
+}
+
+/* Dots */
+.custom-slide-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 3;
+}
+
+.custom-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+    padding: 0;
+}
+
+.custom-dot.active,
+.custom-dot:hover {
+    background: #ef4a23;
+    transform: scale(1.2);
+}
+
+@media (max-width: 991px) {
+    .m-mt-15 {
+        margin-top: 15px;
+    }
+}

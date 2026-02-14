@@ -1,0 +1,31 @@
+{# Custom Vanilla JS Slideshow #}
+<div class="custom-slideshow-wrapper" id="slideshow{{ module }}">
+  <div class="custom-slideshow-inner">
+    {% for banner in banners %}
+    <div class="custom-slide {% if loop.first %}active{% endif %}">
+      {% if banner.link %}
+      <a href="{{ banner.link }}"><img src="{{ banner.image }}" alt="{{ banner.title }}" class="img-responsive" /></a>
+      {% else %}
+      <img src="{{ banner.image }}" alt="{{ banner.title }}" class="img-responsive" />
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <button class="custom-slide-prev" aria-label="Previous"><i class="material-icons">chevron_left</i></button>
+  <button class="custom-slide-next" aria-label="Next"><i class="material-icons">chevron_right</i></button>
+
+  <div class="custom-slide-dots">
+    {% for banner in banners %}
+    <button class="custom-dot {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}" aria-label="Go to slide {{ loop.index }}"></button>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof initCustomSlideshow === 'function') {
+        initCustomSlideshow('slideshow{{ module }}');
+    }
+});
+</script>

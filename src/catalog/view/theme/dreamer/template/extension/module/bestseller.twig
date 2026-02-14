@@ -1,0 +1,6 @@
+<h3>{{ heading_title }}</h3>
+<div class="row">
+ {% for product in products %}
+  {% include 'dreamer/template/product/thumb.twig' with {'product': product} %}
+ {% endfor %}
+</div>
