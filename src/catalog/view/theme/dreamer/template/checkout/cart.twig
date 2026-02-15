@@ -3,14 +3,20 @@
 
   <ul class="breadcrumb">
     {% for breadcrumb in breadcrumbs %}
-    <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+    <li>
+      <a href="{{ breadcrumb.href }}">
+        {% if loop.first %}<i class="material-icons">home</i>{% else %}{{ breadcrumb.text }}{% endif %}
+      </a>
+    </li>
     {% endfor %}
   </ul>
+
+  <h1 class="cart-page-title">Shopping Cart</h1>
 
   {% if error_warning %}
   <div class="alert alert-danger">
     <i class="material-icons">warning</i> {{ error_warning }}
-    <button type="button" class="close" onclick="this.closest('.alert').remove()">×</button>
+    <button type="button" class="close" onclick="this.closest('.alert').remove()">&times;</button>
   </div>
   {% endif %}
 
@@ -23,7 +29,7 @@
   {% if success %}
   <div class="alert alert-success">
     <i class="material-icons">check_circle</i> {{ success }}
-    <button type="button" class="close" onclick="this.closest('.alert').remove()">×</button>
+    <button type="button" class="close" onclick="this.closest('.alert').remove()">&times;</button>
   </div>
   {% endif %}
 
@@ -31,84 +37,111 @@
 
   <div class="cart-layout">
 
-    {# ── Left: product list ── #}
-    <div class="cart-products">
-      <h2 class="cart-section-title">Your Cart</h2>
+    {# ── Left column ── #}
+    <div class="cart-left">
 
-      {% for product in products %}
-      <div class="cart-product-row">
-        <a href="{{ product.href }}" class="cart-product-img">
-          <img src="{{ product.thumb }}" alt="{{ product.name }}" />
-        </a>
-        <div class="cart-product-info">
-          <a href="{{ product.href }}" class="cart-product-name">{{ product.name }}</a>
-          {% if not product.stock %}
-          <span class="text-danger cart-stock-warn">
-            <i class="material-icons">warning</i> Out of Stock
-          </span>
-          {% endif %}
-          {% if product.option %}
-          <div class="cart-product-options">
-            {% for option in product.option %}
-            <span>{{ option.name }}: {{ option.value }}</span>
-            {% endfor %}
+      <div class="cart-card">
+        <h2 class="cart-section-title">Your Products</h2>
+
+        {% for product in products %}
+        <div class="cart-product-row">
+          <a href="{{ product.href }}" class="cart-product-img">
+            <img src="{{ product.thumb }}" alt="{{ product.name }}" />
+          </a>
+          <div class="cart-product-info">
+            <a href="{{ product.href }}" class="cart-product-name">{{ product.name }}</a>
+            {% if product.model %}
+            <div class="cart-product-model">Model: <strong>{{ product.model }}</strong></div>
+            {% endif %}
+            {% if not product.stock %}
+            <span class="text-danger cart-stock-warn">
+              <i class="material-icons">warning</i> Out of Stock
+            </span>
+            {% endif %}
+            {% if product.option %}
+            <div class="cart-product-options">
+              {% for option in product.option %}
+              <span>{{ option.name }}: {{ option.value }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
           </div>
-          {% endif %}
-          {% if product.recurring %}
-          <div class="cart-product-recurring">{{ product.recurring }}</div>
-          {% endif %}
-          {% if product.reward %}
-          <div class="cart-product-reward">{{ product.reward }}</div>
-          {% endif %}
-        </div>
-        <div class="cart-qty-control">
-          <button type="button" class="qty-btn" onclick="cart.update('{{ product.cart_id }}', Math.max(1, parseInt(document.getElementById('qty-{{ product.cart_id }}').value) - 1)); return false;">
-            <i class="material-icons">remove</i>
+          <div class="cart-qty-control">
+            <button type="button" class="qty-btn" onclick="cart.update('{{ product.cart_id }}', Math.max(1, parseInt(document.getElementById('qty-{{ product.cart_id }}').value) - 1)); return false;">
+              <i class="material-icons">remove</i>
+            </button>
+            <input type="text" id="qty-{{ product.cart_id }}" value="{{ product.quantity }}" class="qty-input" />
+            <button type="button" class="qty-btn" onclick="cart.update('{{ product.cart_id }}', parseInt(document.getElementById('qty-{{ product.cart_id }}').value) + 1); return false;">
+              <i class="material-icons">add</i>
+            </button>
+          </div>
+          <div class="cart-product-price">
+            {% if product.total %}{{ product.total }}{% endif %}
+            {% if product.price %}
+            <small class="cart-unit-price">{{ product.price }}/unit</small>
+            {% endif %}
+          </div>
+          <button type="button" class="cart-remove-btn" title="Remove" onclick="cart.remove('{{ product.cart_id }}'); return false;">
+            <i class="material-icons">close</i>
           </button>
-          <input type="text" id="qty-{{ product.cart_id }}" value="{{ product.quantity }}" class="qty-input" />
-          <button type="button" class="qty-btn" onclick="cart.update('{{ product.cart_id }}', parseInt(document.getElementById('qty-{{ product.cart_id }}').value) + 1); return false;">
-            <i class="material-icons">add</i>
-          </button>
         </div>
-        <div class="cart-product-price">
-          {% if product.total %}{{ product.total }}{% endif %}
-          {% if product.price %}
-          <small class="cart-unit-price">{{ product.price }}/unit</small>
-          {% endif %}
-        </div>
-        <button type="button" class="cart-remove-btn" title="Remove" onclick="cart.remove('{{ product.cart_id }}'); return false;">
-          <i class="material-icons">close</i>
-        </button>
-      </div>
-      {% endfor %}
+        {% endfor %}
 
-      {% for voucher in vouchers %}
-      <div class="cart-product-row">
-        <div class="cart-product-img cart-voucher-icon">
-          <i class="material-icons">card_giftcard</i>
+        {% for voucher in vouchers %}
+        <div class="cart-product-row">
+          <div class="cart-product-img cart-voucher-icon">
+            <i class="material-icons">card_giftcard</i>
+          </div>
+          <div class="cart-product-info">
+            <span class="cart-product-name">{{ voucher.description }}</span>
+          </div>
+          <div class="cart-product-price">{{ voucher.amount }}</div>
+          <a href="{{ voucher.remove }}" class="cart-remove-btn" title="Remove">
+            <i class="material-icons">close</i>
+          </a>
         </div>
-        <div class="cart-product-info">
-          <span class="cart-product-name">{{ voucher.description }}</span>
-        </div>
-        <div class="cart-product-price">{{ voucher.amount }}</div>
-        <a href="{{ voucher.remove }}" class="cart-remove-btn" title="Remove">
-          <i class="material-icons">close</i>
-        </a>
+        {% endfor %}
       </div>
-      {% endfor %}
 
-      {% for module in modules %}
-      {{ module }}
-      {% endfor %}
+      {# ── Coupon & Voucher section ── #}
+      <div class="cart-promo-section">
+        <div class="cart-promo-box">
+          <div class="cart-promo-header">
+            <i class="material-icons cart-promo-icon">local_offer</i>
+            <div>
+              <h4>Have a Coupon?</h4>
+              <p>Apply your coupon for an instant discount!</p>
+            </div>
+          </div>
+          <div class="cart-promo-form">
+            <input type="text" id="cart-coupon-input" placeholder="PROMO / COUPON Code" class="cart-promo-input" />
+            <button type="button" class="cart-promo-btn" onclick="cartPage.applyCoupon();">Apply Coupon</button>
+          </div>
+        </div>
+
+        <div class="cart-promo-divider">or,</div>
+
+        <div class="cart-promo-box">
+          <div class="cart-promo-header">
+            <i class="material-icons cart-promo-icon">card_giftcard</i>
+            <div>
+              <h4>Have any Gift Voucher?</h4>
+              <p>Apply your voucher for extra discount!</p>
+            </div>
+          </div>
+          <div class="cart-promo-form">
+            <input type="text" id="cart-voucher-input" placeholder="Voucher Code" class="cart-promo-input" />
+            <button type="button" class="cart-promo-btn" onclick="cartPage.applyVoucher();">Apply Voucher</button>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     {# ── Right: order summary sidebar ── #}
     <div class="cart-summary">
       <div class="cart-summary-box">
         <h3 class="cart-summary-title">Order Summary</h3>
-
-        {# Coupon code input (rendered via total extension modules) #}
-        <div id="cart-coupon-area"></div>
 
         <table class="cart-totals-table">
           {% for total in totals %}
@@ -119,19 +152,11 @@
           {% endfor %}
         </table>
 
-        {% if weight %}
-        <div class="cart-weight">
-          <i class="material-icons">inventory_2</i> Weight: {{ weight }}
-        </div>
-        {% endif %}
-
         <div class="cart-actions">
-          <a href="{{ checkout }}" class="btn-cart-checkout">
-            <i class="material-icons">lock</i> Proceed to Checkout
+          <a href="{{ continue }}" class="btn-cart-addmore">
+            <i class="material-icons">add</i> Add More
           </a>
-          <a href="{{ continue }}" class="btn-cart-continue">
-            <i class="material-icons">arrow_back</i> Continue Shopping
-          </a>
+          <a href="{{ checkout }}" class="btn-cart-checkout">Checkout</a>
         </div>
       </div>
     </div>

@@ -305,6 +305,52 @@ var voucher = {
 };
 
 /* =====================================================================
+   CART PAGE (coupon & voucher forms on the cart page)
+   ===================================================================== */
+
+var cartPage = {
+    applyCoupon: function () {
+        var input = document.getElementById('cart-coupon-input');
+        if (!input || !input.value.trim()) return;
+
+        fetch('index.php?route=extension/total/coupon/coupon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'coupon=' + encodeURIComponent(input.value.trim())
+        }).then(function (r) { return r.json(); })
+        .then(function (json) {
+            if (json.error) {
+                notify.show(json.error, 'error');
+            } else if (json.redirect) {
+                location.href = json.redirect;
+            }
+        }).catch(function () {
+            notify.show('Could not apply coupon.', 'error');
+        });
+    },
+
+    applyVoucher: function () {
+        var input = document.getElementById('cart-voucher-input');
+        if (!input || !input.value.trim()) return;
+
+        fetch('index.php?route=extension/total/voucher/voucher', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'voucher=' + encodeURIComponent(input.value.trim())
+        }).then(function (r) { return r.json(); })
+        .then(function (json) {
+            if (json.error) {
+                notify.show(json.error, 'error');
+            } else if (json.redirect) {
+                location.href = json.redirect;
+            }
+        }).catch(function () {
+            notify.show('Could not apply voucher.', 'error');
+        });
+    }
+};
+
+/* =====================================================================
    WISHLIST
    Replaces: var wishlist = { add, remove } in common.js
    ===================================================================== */

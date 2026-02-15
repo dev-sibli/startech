@@ -68,6 +68,119 @@ input {
     width: 100%;
 }
 
+/* ===== ALERTS ===== */
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    position: relative;
+}
+
+.alert .material-icons {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.alert .close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 0 0 12px;
+    line-height: 1;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.alert .close:hover {
+    opacity: 1;
+}
+
+.alert-success {
+    background: #eafaf1;
+    border: 1px solid #a3d9b1;
+    color: #1e7e34;
+}
+
+.alert-success .material-icons { color: #27ae60; }
+.alert-success .close { color: #1e7e34; }
+
+.alert-danger {
+    background: #fdf2f2;
+    border: 1px solid #f0b4b4;
+    color: #c0392b;
+}
+
+.alert-danger .material-icons { color: #e74c3c; }
+.alert-danger .close { color: #c0392b; }
+
+.alert-info {
+    background: #eaf4fd;
+    border: 1px solid #a8d4f0;
+    color: #1a6fa8;
+}
+
+.alert-info .material-icons { color: #2196f3; }
+.alert-info .close { color: #1a6fa8; }
+
+/* ===== BREADCRUMB ===== */
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    list-style: none;
+    padding: 14px 16px;
+    margin: 0 0 4px;
+    font-size: 13px;
+    color: #777;
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+}
+
+.breadcrumb li {
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb li::after {
+    content: '/';
+    margin-left: 8px;
+    color: #bbb;
+    font-size: 13px;
+}
+
+.breadcrumb li:last-child::after {
+    content: '';
+}
+
+.breadcrumb a {
+    color: #555;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb a:hover {
+    color: #ef4a23;
+}
+
+.breadcrumb .material-icons {
+    font-size: 18px;
+    color: #555;
+}
+
+.breadcrumb a:hover .material-icons {
+    color: #ef4a23;
+}
+
 /* ===== MINIMAL GRID (replaces Bootstrap .row / .col-sm-*) ===== */
 .row {
     display: flex;
@@ -1311,14 +1424,14 @@ header.sticky {
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    border-bottom: 1px solid #eee;
+    background: #1a1a2e;
     flex-shrink: 0;
 }
 
 .cart-drawer__title {
     font-size: 16px;
     font-weight: 700;
-    color: #333;
+    color: #fff;
     margin: 0;
     letter-spacing: 0.5px;
 }
@@ -1327,13 +1440,13 @@ header.sticky {
     background: none;
     border: none;
     font-size: 26px;
-    color: #777;
+    color: #fff;
     cursor: pointer;
     line-height: 1;
     padding: 0;
 }
 
-.cart-drawer__close:hover { color: #333; }
+.cart-drawer__close:hover { color: #ccc; }
 
 .cart-drawer__body {
     flex: 1;
