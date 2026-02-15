@@ -1,47 +1,102 @@
-<footer>
-  <div class="container">
-    <div class="row">
-      {% if informations %}
-      <div class="col-sm-3">
-        <h5>{{ text_information }}</h5>
-        <ul class="list-unstyled">
-         {% for information in informations %}
-          <li><a href="{{ information.href }}">{{ information.title }}</a></li>
-          {% endfor %}
-        </ul>
-      </div>
-      {% endif %}
-      <div class="col-sm-3">
-        <h5>{{ text_service }}</h5>
-        <ul class="list-unstyled">
-          <li><a href="{{ contact }}">{{ text_contact }}</a></li>
-          <li><a href="{{ return }}">{{ text_return }}</a></li>
-          <li><a href="{{ sitemap }}">{{ text_sitemap }}</a></li>
-        </ul>
-      </div>
-      <div class="col-sm-3">
-        <h5>{{ text_extra }}</h5>
-        <ul class="list-unstyled">
-          <li><a href="{{ manufacturer }}">{{ text_manufacturer }}</a></li>
-          <li><a href="{{ voucher }}">{{ text_voucher }}</a></li>
-          <li><a href="{{ affiliate }}">{{ text_affiliate }}</a></li>
-          <li><a href="{{ special }}">{{ text_special }}</a></li>
-        </ul>
-      </div>
-      <div class="col-sm-3">
-        <h5>{{ text_account }}</h5>
-        <ul class="list-unstyled">
-          <li><a href="{{ account }}">{{ text_account }}</a></li>
-          <li><a href="{{ order }}">{{ text_order }}</a></li>
-          <li><a href="{{ wishlist }}">{{ text_wishlist }}</a></li>
-          <li><a href="{{ newsletter }}">{{ text_newsletter }}</a></li>
-        </ul>
+<link href="/catalog/view/theme/dreamer/stylesheet/main.css" rel="stylesheet">
+{% for style in styles %}
+<link href="{{ style.href }}" type="text/css" rel="{{ style.rel }}" media="{{ style.media }}" />
+{% endfor %}
+{% for script in scripts %}
+<script src="{{ script }}" type="text/javascript"></script>
+{% endfor %}
+
+<footer class="site-footer">
+  <div class="footer-top">
+    <div class="container">
+      <div class="footer-grid">
+
+        <div class="footer-col footer-support">
+          <h5>SUPPORT</h5>
+          <div class="footer-phone-box">
+            <i class="material-icons">phone</i>
+            <div>
+              <span class="footer-hours">9 AM - 8 PM</span>
+              <div class="footer-phone">16793</div>
+            </div>
+          </div>
+          <div class="footer-store-box">
+            <i class="material-icons">location_on</i>
+            <div>
+              <span style="color:#acacac; font-size:13px; display:block;">Store Locator</span>
+              <a href="#">Find Our Stores</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-col footer-about">
+          <h5>ABOUT US</h5>
+          <ul>
+            {% for information in informations %}
+            <li><a href="{{ information.href }}">{{ information.title }}</a></li>
+            {% endfor %}
+            <li><a href="{{ contact }}">{{ text_contact }}</a></li>
+            <li><a href="{{ return }}">{{ text_return }}</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col footer-service">
+          <h5>SERVICE</h5>
+          <ul>
+            <li><a href="{{ sitemap }}">{{ text_sitemap }}</a></li>
+            <li><a href="{{ manufacturer }}">{{ text_manufacturer }}</a></li>
+            <li><a href="{{ voucher }}">{{ text_voucher }}</a></li>
+            <li><a href="{{ affiliate }}">{{ text_affiliate }}</a></li>
+            <li><a href="{{ special }}">{{ text_special }}</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col footer-connect">
+          <h5>STAY CONNECTED</h5>
+          <address>Head Office: Dhaka, Bangladesh</address>
+          <div class="footer-email">Email: <a href="#">info@example.com</a></div>
+          <ul style="margin-top:14px;">
+            <li><a href="{{ account }}">{{ text_account }}</a></li>
+            <li><a href="{{ order }}">{{ text_order }}</a></li>
+            <li><a href="{{ wishlist }}">{{ text_wishlist }}</a></li>
+            <li><a href="{{ newsletter }}">{{ text_newsletter }}</a></li>
+          </ul>
+        </div>
+
       </div>
     </div>
-    <hr>
-    <p>{{ powered }}</p>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="container">
+      {{ powered }}
+    </div>
   </div>
 </footer>
+
+<div class="floating-actions">
+  <a href="index.php?route=product/compare" class="floating-btn floating-compare" title="Compare">
+    <i class="material-icons">compare_arrows</i>
+    <span class="floating-count" id="compare-count">0</span>
+    <span class="floating-label">COMPARE</span>
+  </a>
+  <a href="index.php?route=checkout/cart" class="floating-btn floating-cart" title="Cart">
+    <i class="material-icons">shopping_cart</i>
+    <span class="floating-count" id="cart-count">0</span>
+    <span class="floating-label">CART</span>
+  </a>
+</div>
+
+{# Cart Drawer (slide-out sidebar) #}
+<div id="cart-drawer-overlay" class="cart-drawer-overlay"></div>
+<div id="cart-drawer" class="cart-drawer">
+  <div class="cart-drawer__header">
+    <h3 class="cart-drawer__title">YOUR CART</h3>
+    <button class="cart-drawer__close" aria-label="Close">&times;</button>
+  </div>
+  <div class="cart-drawer__body"></div>
+</div>
+
 {% for style in styles %}
 <link href="{{ style.href }}" type="text/css" rel="{{ style.rel }}" media="{{ style.media }}" />
 {% endfor %}

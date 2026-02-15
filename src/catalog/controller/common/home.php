@@ -5,7 +5,7 @@ class ControllerCommonHome extends Controller {
 		$this->document->setDescription($this->config->get('config_meta_description'));
 		$this->document->setKeywords($this->config->get('config_meta_keyword'));
 		$this->document->addStyle('catalog/view/theme/dreamer/stylesheet/home.css');
-		$this->document->addScript('catalog/view/theme/dreamer/javascript/site.js');
+		$this->document->addScript('catalog/view/theme/dreamer/javascript/home.js', 'footer');
 
 		if (isset($this->request->get['route'])) {
 			$this->document->addLink($this->config->get('config_url'), 'canonical');

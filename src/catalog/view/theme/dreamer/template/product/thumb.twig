@@ -1,0 +1,35 @@
+<div class="product-layout product-grid">
+  <div class="product-thumb">
+    <div class="image">
+      <a href="{{ product.href }}">
+        <img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}" />
+      </a>
+    </div>
+    <div class="caption">
+      <h4><a href="{{ product.href }}">{{ product.name }}</a></h4>
+      {% if product.price %}
+      <p class="price">
+        {% if product.special %}
+        <span class="price-new">{{ product.special }}</span>
+        <span class="price-old">{{ product.price }}</span>
+        {% else %}
+        {{ product.price }}
+        {% endif %}
+        {% if product.tax %}<span class="price-tax">{{ text_tax }} {{ product.tax }}</span>{% endif %}
+      </p>
+      {% endif %}
+    </div>
+    <div class="button-group">
+      <button type="button" class="btn-cart" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}');">
+        <i class="material-icons">shopping_cart</i>
+        <span>{{ button_cart }}</span>
+      </button>
+      <button type="button" class="btn-compare" title="{{ button_compare }}" onclick="compare.add('{{ product.product_id }}');">
+        <i class="material-icons">compare_arrows</i>
+      </button>
+      <button type="button" class="btn-compare" title="{{ button_wishlist }}" onclick="wishlist.add('{{ product.product_id }}');">
+        <i class="material-icons">favorite_border</i>
+      </button>
+    </div>
+  </div>
+</div>

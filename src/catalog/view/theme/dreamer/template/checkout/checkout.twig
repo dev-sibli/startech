@@ -1,0 +1,106 @@
+{{ header }}
+<div id="checkout-checkout" class="container">
+
+  <ul class="breadcrumb">
+    {% for breadcrumb in breadcrumbs %}
+    <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+    {% endfor %}
+  </ul>
+
+  {% if error_warning %}
+  <div class="checkout-alert checkout-alert--danger">
+    <i class="material-icons">error_outline</i> {{ error_warning }}
+    <button class="checkout-alert__close" aria-label="Close">&times;</button>
+  </div>
+  {% endif %}
+
+  <h1><i class="material-icons">lock</i> Checkout</h1>
+
+  <div class="checkout-layout"
+       id="checkout-page"
+       data-logged="{{ logged ? '1' : '0' }}"
+       data-shipping-required="{{ shipping_required ? '1' : '0' }}"
+       data-account="{{ account }}">
+
+    {# ── Left: checkout sections ── #}
+    <div class="checkout-main">
+
+      {# Login / account option (guests only) #}
+      {% if not logged %}
+      <div class="checkout-section" id="section-checkout-option">
+        <div class="checkout-section-header">
+          <span class="checkout-section-number">1</span>
+          <h3 class="checkout-section-title">{{ text_checkout_option }}</h3>
+        </div>
+        <div class="checkout-section-body" id="body-checkout-option"></div>
+      </div>
+      {% endif %}
+
+      {# Billing / Payment Address #}
+      <div class="checkout-section" id="section-payment-address">
+        <div class="checkout-section-header">
+          <span class="checkout-section-number">{% if logged %}1{% else %}2{% endif %}</span>
+          <h3 class="checkout-section-title" id="title-payment-address">
+            {% if not logged and account != 'guest' %}{{ text_checkout_account }}{% else %}{{ text_checkout_payment_address }}{% endif %}
+          </h3>
+        </div>
+        <div class="checkout-section-body" id="body-payment-address"></div>
+      </div>
+
+      {# Shipping Address #}
+      {% if shipping_required %}
+      <div class="checkout-section" id="section-shipping-address">
+        <div class="checkout-section-header">
+          <span class="checkout-section-number">{% if logged %}2{% else %}3{% endif %}</span>
+          <h3 class="checkout-section-title">{{ text_checkout_shipping_address }}</h3>
+        </div>
+        <div class="checkout-section-body" id="body-shipping-address"></div>
+      </div>
+
+      {# Shipping Method #}
+      <div class="checkout-section" id="section-shipping-method">
+        <div class="checkout-section-header">
+          <span class="checkout-section-number">{% if logged %}3{% else %}4{% endif %}</span>
+          <h3 class="checkout-section-title">{{ text_checkout_shipping_method }}</h3>
+        </div>
+        <div class="checkout-section-body" id="body-shipping-method"></div>
+      </div>
+      {% endif %}
+
+      {# Payment Method #}
+      <div class="checkout-section" id="section-payment-method">
+        <div class="checkout-section-header">
+          <span class="checkout-section-number">{% if shipping_required %}{% if logged %}4{% else %}5{% endif %}{% else %}{% if logged %}2{% else %}3{% endif %}{% endif %}</span>
+          <h3 class="checkout-section-title">{{ text_checkout_payment_method }}</h3>
+        </div>
+        <div class="checkout-section-body" id="body-payment-method"></div>
+      </div>
+
+      {# Confirm #}
+      <div class="checkout-section" id="section-checkout-confirm">
+        <div class="checkout-section-header">
+          <span class="checkout-section-number">{% if shipping_required %}{% if logged %}5{% else %}6{% endif %}{% else %}{% if logged %}3{% else %}4{% endif %}{% endif %}</span>
+          <h3 class="checkout-section-title">{{ text_checkout_confirm }}</h3>
+        </div>
+        <div class="checkout-section-body" id="body-checkout-confirm"></div>
+      </div>
+
+    </div>
+
+    {# ── Right: order summary sidebar ── #}
+    <div class="checkout-sidebar">
+      <div class="checkout-sidebar-box">
+        <h3 class="checkout-sidebar-title">Order Summary</h3>
+        <div id="checkout-order-summary">
+          <div class="checkout-sidebar-loading">
+            <i class="material-icons">hourglass_empty</i> Loading...
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {{ content_bottom }}
+</div>
+{{ footer }}

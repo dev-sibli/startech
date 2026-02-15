@@ -13,10 +13,8 @@ class ControllerAccountEdit extends Controller {
 
 		$this->document->setTitle($this->language->get('heading_title'));
 
-		$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/moment/moment.min.js');
-		$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/moment/moment-with-locales.min.js');
-		$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.js');
-		$this->document->addStyle('catalog/view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.css');
+		$this->document->addStyle('catalog/view/theme/dreamer/stylesheet/account.css');
+		$this->document->addScript('catalog/view/theme/dreamer/javascript/account.js', 'footer');
 
 		$this->load->model('account/customer');
 

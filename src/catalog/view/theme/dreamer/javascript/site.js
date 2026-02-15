@@ -1,122 +1,78 @@
-/** * DREAMER THEME - SITE.JS 
- * Purpose: Global UI logic
+/**
+ * DREAMER THEME - SITE.JS
+ * Purpose: Reusable UI components (called by page-specific scripts or twig templates)
+ *
+ * Global handlers (sticky header, mobile menu, search focus, navbar toggle)
+ * have been moved to app.js which loads on every page.
  */
 
-document.addEventListener('DOMContentLoaded', function () {
+'use strict';
 
-    // 1. Sticky Header Logic
-    const header = document.querySelector('header');
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 100) {
-            header.classList.add('sticky');
-        } else {
-            header.classList.remove('sticky');
-        }
-    });
+/* =====================================================================
+   CUSTOM SLIDESHOW
+   Called by home.js: initCustomSlideshow('custom-slideshow')
+   ===================================================================== */
 
-    // 2. Mobile Menu Toggle
-    const menuBtn = document.querySelector('.mobile-menu-btn');
-    if (menuBtn) {
-        menuBtn.addEventListener('click', () => {
-            document.querySelector('#main-nav').classList.toggle('active');
-        });
-    }
-
-    // 3. Simple Search Placeholder Animation
-    const searchInput = document.querySelector('.search-wrap input');
-    if (searchInput) {
-        searchInput.addEventListener('focus', () => {
-            searchInput.parentElement.classList.add('focused');
-        });
-        searchInput.addEventListener('blur', () => {
-            searchInput.parentElement.classList.remove('focused');
-        });
-    }
-});
-
-/* Custom Slideshow Logic */
 function initCustomSlideshow(id) {
-    const container = document.getElementById(id);
+    var container = document.getElementById(id);
     if (!container) return;
 
-    const slides = container.querySelectorAll('.custom-slide');
-    const dots = container.querySelectorAll('.custom-dot');
-    const prevBtn = container.querySelector('.custom-slide-prev');
-    const nextBtn = container.querySelector('.custom-slide-next');
-    let currentIndex = 0;
-    let interval;
+    var slides = container.querySelectorAll('.custom-slide');
+    var dots   = container.querySelectorAll('.custom-dot');
+    var prevBtn = container.querySelector('.custom-slide-prev');
+    var nextBtn = container.querySelector('.custom-slide-next');
+    var currentIndex = 0;
+    var interval;
 
     function showSlide(index) {
         if (index >= slides.length) index = 0;
         if (index < 0) index = slides.length - 1;
 
-        slides.forEach(slide => slide.classList.remove('active'));
-        dots.forEach(dot => dot.classList.remove('active'));
+        slides.forEach(function (slide) { slide.classList.remove('active'); });
+        dots.forEach(function (dot) { dot.classList.remove('active'); });
 
         slides[index].classList.add('active');
-        dots[index].classList.add('active');
+        if (dots[index]) dots[index].classList.add('active');
         currentIndex = index;
     }
 
-    function nextSlide() {
-        showSlide(currentIndex + 1);
-    }
-
-    function prevSlide() {
-        showSlide(currentIndex - 1);
-    }
+    function nextSlide() { showSlide(currentIndex + 1); }
+    function prevSlide() { showSlide(currentIndex - 1); }
 
     function startAutoPlay() {
         stopAutoPlay();
-        interval = setInterval(nextSlide, 5000); // 5 seconds
+        interval = setInterval(nextSlide, 5000);
     }
 
     function stopAutoPlay() {
         if (interval) clearInterval(interval);
     }
 
-    // Event Listeners
-    if (nextBtn) nextBtn.addEventListener('click', () => {
-        nextSlide();
-        startAutoPlay();
+    if (nextBtn) nextBtn.addEventListener('click', function () { nextSlide(); startAutoPlay(); });
+    if (prevBtn) prevBtn.addEventListener('click', function () { prevSlide(); startAutoPlay(); });
+
+    dots.forEach(function (dot, i) {
+        dot.addEventListener('click', function () { showSlide(i); startAutoPlay(); });
     });
 
-    if (prevBtn) prevBtn.addEventListener('click', () => {
-        prevSlide();
-        startAutoPlay();
-    });
+    /* Touch / swipe support */
+    var touchStartX = 0;
 
-    dots.forEach((dot, index) => {
-        dot.addEventListener('click', () => {
-            showSlide(index);
-            startAutoPlay();
-        });
-    });
-
-    // Touch Support (Simple Swipe)
-    let touchStartX = 0;
-    let touchEndX = 0;
-
-    container.addEventListener('touchstart', e => {
+    container.addEventListener('touchstart', function (e) {
         touchStartX = e.changedTouches[0].screenX;
         stopAutoPlay();
     }, { passive: true });
 
-    container.addEventListener('touchend', e => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
+    container.addEventListener('touchend', function (e) {
+        var diff = e.changedTouches[0].screenX - touchStartX;
+        if (diff < -50) nextSlide();
+        else if (diff > 50) prevSlide();
         startAutoPlay();
     }, { passive: true });
 
-    function handleSwipe() {
-        if (touchEndX < touchStartX - 50) nextSlide();
-        if (touchEndX > touchStartX + 50) prevSlide();
-    }
-
-    // Start
-    startAutoPlay();
-
-    // Pause on hover
     container.addEventListener('mouseenter', stopAutoPlay);
     container.addEventListener('mouseleave', startAutoPlay);
+
+    showSlide(0);
+    startAutoPlay();
 }

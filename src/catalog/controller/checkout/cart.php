@@ -5,6 +5,8 @@ class ControllerCheckoutCart extends Controller {
 
 		$this->document->setTitle($this->language->get('heading_title'));
 
+		$this->document->addStyle('catalog/view/theme/dreamer/stylesheet/cart.css');
+
 		$data['breadcrumbs'] = array();
 
 		$data['breadcrumbs'][] = array(
@@ -371,6 +373,21 @@ class ControllerCheckoutCart extends Controller {
 				}
 
 				$json['total'] = sprintf($this->language->get('text_items'), $this->cart->countProducts() + (isset($this->session->data['vouchers']) ? count($this->session->data['vouchers']) : 0), $this->currency->format($total, $this->session->data['currency']));
+
+				// Extra fields for cart-added popup
+				$json['product_name'] = $product_info['name'];
+
+				$this->load->model('tool/image');
+				if ($product_info['image']) {
+					$json['product_image'] = $this->model_tool_image->resize($product_info['image'], $this->config->get('theme_' . $this->config->get('config_theme') . '_image_cart_width'), $this->config->get('theme_' . $this->config->get('config_theme') . '_image_cart_height'));
+				} else {
+					$json['product_image'] = $this->model_tool_image->resize('placeholder.png', $this->config->get('theme_' . $this->config->get('config_theme') . '_image_cart_width'), $this->config->get('theme_' . $this->config->get('config_theme') . '_image_cart_height'));
+				}
+
+				$json['cart_count'] = $this->cart->countProducts() + (isset($this->session->data['vouchers']) ? count($this->session->data['vouchers']) : 0);
+				$json['cart_total'] = $this->currency->format($total, $this->session->data['currency']);
+				$json['cart_url'] = str_replace('&amp;', '&', $this->url->link('checkout/cart'));
+				$json['checkout_url'] = str_replace('&amp;', '&', $this->url->link('checkout/checkout', '', true));
 			} else {
 				$json['redirect'] = str_replace('&amp;', '&', $this->url->link('product/product', 'product_id=' . $this->request->post['product_id']));
 			}

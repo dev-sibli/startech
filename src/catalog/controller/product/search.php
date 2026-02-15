@@ -454,4 +454,60 @@ class ControllerProductSearch extends Controller {
 
 		$this->response->setOutput($this->load->view('product/search', $data));
 	}
+
+	public function autocomplete() {
+		$json = [];
+
+		if (isset($this->request->get['filter_name']) && strlen(trim($this->request->get['filter_name'])) >= 2) {
+			$this->load->model('catalog/product');
+			$this->load->model('tool/image');
+
+			$query = trim($this->request->get['filter_name']);
+			$words = array_filter(array_slice(explode(' ', $query), 0, 2));
+			$seen  = [];
+
+			foreach ($words as $word) {
+				$results = $this->model_catalog_product->getProducts([
+					'filter_name' => $word,
+					'start'       => 0,
+					'limit'       => 5,
+				]);
+
+				foreach ($results as $p) {
+					if (isset($seen[$p['product_id']])) continue;
+					$seen[$p['product_id']] = true;
+
+					$image = $p['image'] ?: 'no_image.png';
+					$thumb = $this->model_tool_image->resize($image, 60, 60);
+
+					$price = $this->currency->format(
+						$this->tax->calculate($p['price'], $p['tax_class_id'], $this->config->get('config_tax')),
+						$this->session->data['currency']
+					);
+					$special = '';
+					if ($p['special']) {
+						$special = $this->currency->format(
+							$this->tax->calculate($p['special'], $p['tax_class_id'], $this->config->get('config_tax')),
+							$this->session->data['currency']
+						);
+					}
+
+					$json[] = [
+						'product_id' => (int)$p['product_id'],
+						'label'      => html_entity_decode($p['name'], ENT_QUOTES, 'UTF-8'),
+						'value'      => $this->url->link('product/product', 'product_id=' . $p['product_id']),
+						'href'       => $this->url->link('product/product', 'product_id=' . $p['product_id']),
+						'thumb'      => $thumb,
+						'price'      => $special ?: $price,
+						'stock'      => (int)$p['quantity'] > 0,
+					];
+
+					if (count($json) >= 8) break 2;
+				}
+			}
+		}
+
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput(json_encode($json));
+	}
 }

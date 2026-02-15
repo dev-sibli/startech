@@ -24,6 +24,14 @@ class ControllerCommonHeader extends Controller {
 			$this->document->addLink($server . 'image/' . $this->config->get('config_icon'), 'icon');
 		}
 
+		// Register header scripts BEFORE getScripts() captures the array.
+		// jQuery shim for extension compatibility; app.js + site.js provide global
+		// functions (cart, wishlist, compare, initCustomSlideshow, etc.) that
+		// inline onclick handlers and page-specific scripts depend on.
+		$this->document->addScript('catalog/view/javascript/jquery/jquery-3.7.1.min.js', 'header');
+		$this->document->addScript('catalog/view/theme/dreamer/javascript/app.js', 'header');
+		$this->document->addScript('catalog/view/theme/dreamer/javascript/site.js', 'header');
+
 		$data['title'] = $this->document->getTitle();
 
 		$data['base'] = $server;

@@ -1,0 +1,38 @@
+<h3>{{ heading_title }}</h3>
+<div class="product-grid-container">
+ {% for product in products %}
+  <div class="product-layout product-grid">
+    <div class="product-thumb">
+      <div class="image">
+        {% if product.special %}<span class="badge-save">Save: {{ product.special }}</span>{% endif %}
+        <a href="{{ product.href }}">
+          <img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}" />
+        </a>
+      </div>
+      <div class="caption">
+        <h4><a href="{{ product.href }}">{{ product.name }}</a></h4>
+        {% if product.description %}<p class="product-desc">{{ product.description }}</p>{% endif %}
+        {% if product.price %}
+        <p class="price">
+          {% if product.special %}
+          <span class="price-new">{{ product.special }}</span>
+          <span class="price-old">{{ product.price }}</span>
+          {% else %}
+          {{ product.price }}
+          {% endif %}
+        </p>
+        {% endif %}
+      </div>
+      <div class="button-group">
+        <button type="button" class="btn-cart" onclick="cart.add('{{ product.product_id }}');">
+          <i class="material-icons">shopping_cart</i>
+          <span>Buy Now</span>
+        </button>
+        <button type="button" class="btn-compare-text" onclick="compare.add('{{ product.product_id }}');">
+          <i class="material-icons">library_add</i> Add to Compare
+        </button>
+      </div>
+    </div>
+  </div>
+ {% endfor %}
+</div>
