@@ -2,9 +2,33 @@
 <div id="product-product" class="container">
   <ul class="breadcrumb">
     {% for breadcrumb in breadcrumbs %}
-    <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+    <li><a href="{{ breadcrumb.href }}">{% if loop.first %}<i class="material-icons">home</i>{% else %}{{ breadcrumb.text }}{% endif %}</a></li>
     {% endfor %}
   </ul>
+
+  {# ── Share & Actions Bar ── #}
+  <div class="product-share-bar">
+    <div class="product-share-left">
+      <span class="product-share-label">Share:</span>
+      <a href="https://www.facebook.com/dialog/send?link={{ share }}&app_id=140586622674265&redirect_uri={{ share }}" target="_blank" rel="noopener" class="product-share-icon" title="Messenger">
+        <i class="material-icons">chat</i>
+      </a>
+      <a href="https://api.whatsapp.com/send?text={{ heading_title }} {{ share }}" target="_blank" rel="noopener" class="product-share-icon" title="WhatsApp">
+        <i class="material-icons">phone</i>
+      </a>
+      <button type="button" class="product-share-icon" id="btn-copy-link" title="Copy Link" data-url="{{ share }}">
+        <i class="material-icons">link</i>
+      </button>
+    </div>
+    <div class="product-share-right">
+      <button type="button" class="product-action-btn" onclick="wishlist.add('{{ product_id }}');">
+        <i class="material-icons">bookmark_border</i> Save
+      </button>
+      <button type="button" class="product-action-btn" onclick="compare.add('{{ product_id }}');">
+        <i class="material-icons">add_box</i> Add to Compare
+      </button>
+    </div>
+  </div>
 
   <div class="row">{{ column_left }}
     {% if column_left and column_right %}
@@ -16,23 +40,28 @@
     {% endif %}
     <div id="content" class="{{ class }}">{{ content_top }}
 
-      {# Two-column product grid: images left, info right #}
+      {# ── Product Detail Grid: images left, info right ── #}
       <div class="product-detail-grid">
 
-        {# ── Left: image gallery ── #}
+        {# ── Left: Image Gallery ── #}
         <div class="product-images-col">
           {% if thumb or images %}
+          <div class="product-main-image" id="product-main-image">
+            <a href="{{ popup }}" class="product-main-image-link" id="main-image-link" title="{{ heading_title }}">
+              <img src="{{ thumb }}" id="main-image" title="{{ heading_title }}" alt="{{ heading_title }}" />
+            </a>
+          </div>
           <ul class="product-thumbnails" id="product-thumbnails">
             {% if thumb %}
-            <li class="product-thumb-main">
-              <a class="product-thumb-link" href="{{ popup }}" title="{{ heading_title }}">
+            <li class="product-thumb-item active">
+              <a class="product-thumb-link" href="{{ popup }}" data-thumb="{{ thumb }}" title="{{ heading_title }}">
                 <img src="{{ thumb }}" title="{{ heading_title }}" alt="{{ heading_title }}" />
               </a>
             </li>
             {% endif %}
             {% for image in images %}
-            <li class="product-thumb-additional">
-              <a class="product-thumb-link" href="{{ image.popup }}" title="{{ heading_title }}">
+            <li class="product-thumb-item">
+              <a class="product-thumb-link" href="{{ image.popup }}" data-thumb="{{ image.thumb }}" title="{{ heading_title }}">
                 <img src="{{ image.thumb }}" title="{{ heading_title }}" alt="{{ heading_title }}" />
               </a>
             </li>
@@ -41,179 +70,214 @@
           {% endif %}
         </div>
 
-        {# ── Right: product info ── #}
+        {# ── Right: Product Info ── #}
         <div class="product-info-col">
-          <div class="product-actions-top">
-            <button type="button" class="btn-icon" title="{{ button_wishlist }}" onclick="wishlist.add('{{ product_id }}');">
-              <i class="material-icons">favorite_border</i>
-            </button>
-            <button type="button" class="btn-icon" title="{{ button_compare }}" onclick="compare.add('{{ product_id }}');">
-              <i class="material-icons">compare_arrows</i>
-            </button>
-          </div>
           <h1 class="product-title">{{ heading_title }}</h1>
-          <ul class="product-meta list-unstyled">
+
+          {# Info Pills #}
+          <div class="product-info-pills">
+            {% if price %}
+            <div class="info-pill">
+              <span class="info-pill__label">Price:</span>
+              {% if special %}
+              <span class="info-pill__value info-pill__value--price">{{ special }}</span>
+              <span class="info-pill__value info-pill__value--old">{{ price }}</span>
+              {% else %}
+              <span class="info-pill__value info-pill__value--price">{{ price }}</span>
+              {% endif %}
+            </div>
+            {% endif %}
+            {% if price and not special %}
+            <div class="info-pill">
+              <span class="info-pill__label">Regular Price:</span>
+              <span class="info-pill__value">{{ price }}</span>
+            </div>
+            {% elseif price and special %}
+            <div class="info-pill">
+              <span class="info-pill__label">Regular Price:</span>
+              <span class="info-pill__value">{{ price }}</span>
+            </div>
+            {% endif %}
+            <div class="info-pill">
+              <span class="info-pill__label">Status:</span>
+              <span class="info-pill__value">{{ stock }}</span>
+            </div>
             {% if manufacturer %}
-            <li>{{ text_manufacturer }} <a href="{{ manufacturers }}">{{ manufacturer }}</a></li>
-            {% endif %}
-            <li>{{ text_model }} {{ model }}</li>
-            {% if reward %}
-            <li>{{ text_reward }} {{ reward }}</li>
-            {% endif %}
-            <li>{{ text_stock }} {{ stock }}</li>
-          </ul>
+          <div class="info-pill">
+            <span class="info-pill__label">Brand:</span>
+            <a href="{{ manufacturers }}" class="info-pill__value">{{ manufacturer }}</a>
+          </div>
+          {% endif %}
+          </div>
 
-          {% if price %}
-          <div class="product-price-block">
-            {% if not special %}
-            <span class="product-price">{{ price }}</span>
-            {% else %}
-            <span class="product-price">{{ special }}</span>
-            <span class="product-price-old">{{ price }}</span>
-            {% endif %}
-            {% if tax %}<div class="product-tax">{{ text_tax }} {{ tax }}</div>{% endif %}
-            {% if points %}<div class="product-points">{{ text_points }} {{ points }}</div>{% endif %}
-            {% if discounts %}
-            <ul class="product-discounts list-unstyled">
-              {% for discount in discounts %}
-              <li>{{ discount.quantity }}{{ text_discount }}{{ discount.price }}</li>
-              {% endfor %}
+          
+
+          {# Key Features #}
+          <div class="product-key-features">
+            <h3>Key Features</h3>
+            <ul class="key-features-list">
+              <li>Model: {{ model }}</li>
             </ul>
-            {% endif %}
+            <a href="#tab-description" class="view-more-link" id="view-more-link">View More Info</a>
           </div>
-          {% endif %}
 
-          {% if review_status %}
-          <div class="product-rating">
-            {% for i in 1..5 %}
-            <i class="material-icons">{% if rating >= i %}star{% else %}star_border{% endif %}</i>
-            {% endfor %}
-            <a href="#tab-review" class="review-link">{{ reviews }}</a>
-            / <a href="#tab-review" class="review-link">{{ text_write }}</a>
-          </div>
-          {% endif %}
+          
 
           <div id="product">
+            {# Product Options #}
             {% if options %}
-            <hr>
-            <h3>{{ text_option }}</h3>
-            {% for option in options %}
+            <div class="product-options-section">
+              {% for option in options %}
 
-            {% if option.type == 'select' %}
-            <div class="form-group{% if option.required %} required{% endif %}">
-              <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
-              <select name="option[{{ option.product_option_id }}]" id="input-option{{ option.product_option_id }}" class="form-control">
-                <option value="">{{ text_select }}</option>
-                {% for v in option.product_option_value %}
-                <option value="{{ v.product_option_value_id }}">{{ v.name }}{% if v.price %} ({{ v.price_prefix }}{{ v.price }}){% endif %}</option>
-                {% endfor %}
-              </select>
-            </div>
-            {% endif %}
-
-            {% if option.type == 'radio' %}
-            <div class="form-group{% if option.required %} required{% endif %}">
-              <label class="control-label">{{ option.name }}</label>
-              <div id="input-option{{ option.product_option_id }}">
-                {% for v in option.product_option_value %}
-                <div class="radio">
-                  <label>
-                    <input type="radio" name="option[{{ option.product_option_id }}]" value="{{ v.product_option_value_id }}" />
-                    {% if v.image %}<img src="{{ v.image }}" alt="{{ v.name }}" class="img-thumbnail" />{% endif %}
+              {% if option.type == 'select' %}
+              <div class="form-group{% if option.required %} required{% endif %}">
+                <label class="control-label">{{ option.name }}:</label>
+                <input type="hidden" name="option[{{ option.product_option_id }}]" id="input-option{{ option.product_option_id }}" value="" />
+                <div class="option-pills" data-option-id="{{ option.product_option_id }}" data-type="select">
+                  {% for v in option.product_option_value %}
+                  <button type="button" class="option-pill" data-value="{{ v.product_option_value_id }}">
                     {{ v.name }}{% if v.price %} ({{ v.price_prefix }}{{ v.price }}){% endif %}
-                  </label>
+                  </button>
+                  {% endfor %}
                 </div>
-                {% endfor %}
               </div>
-            </div>
-            {% endif %}
+              {% endif %}
 
-            {% if option.type == 'checkbox' %}
-            <div class="form-group{% if option.required %} required{% endif %}">
-              <label class="control-label">{{ option.name }}</label>
-              <div id="input-option{{ option.product_option_id }}">
-                {% for v in option.product_option_value %}
-                <div class="checkbox">
-                  <label>
-                    <input type="checkbox" name="option[{{ option.product_option_id }}][]" value="{{ v.product_option_value_id }}" />
-                    {% if v.image %}<img src="{{ v.image }}" alt="{{ v.name }}" class="img-thumbnail" />{% endif %}
+              {% if option.type == 'radio' %}
+              <div class="form-group{% if option.required %} required{% endif %}">
+                <label class="control-label">{{ option.name }}:</label>
+                <input type="hidden" name="option[{{ option.product_option_id }}]" id="input-option{{ option.product_option_id }}" value="" />
+                <div class="option-pills" data-option-id="{{ option.product_option_id }}" data-type="radio">
+                  {% for v in option.product_option_value %}
+                  <button type="button" class="option-pill" data-value="{{ v.product_option_value_id }}">
+                    {% if v.image %}<img src="{{ v.image }}" alt="{{ v.name }}" class="option-pill__img" />{% endif %}
                     {{ v.name }}{% if v.price %} ({{ v.price_prefix }}{{ v.price }}){% endif %}
-                  </label>
+                  </button>
+                  {% endfor %}
                 </div>
-                {% endfor %}
               </div>
-            </div>
-            {% endif %}
+              {% endif %}
 
-            {% if option.type == 'text' %}
-            <div class="form-group{% if option.required %} required{% endif %}">
-              <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
-              <input type="text" name="option[{{ option.product_option_id }}]" value="{{ option.value }}" placeholder="{{ option.name }}" id="input-option{{ option.product_option_id }}" class="form-control" />
-            </div>
-            {% endif %}
+              {% if option.type == 'checkbox' %}
+              <div class="form-group{% if option.required %} required{% endif %}">
+                <label class="control-label">{{ option.name }}:</label>
+                <div class="option-pills" data-option-id="{{ option.product_option_id }}" data-type="checkbox">
+                  {% for v in option.product_option_value %}
+                  <button type="button" class="option-pill" data-value="{{ v.product_option_value_id }}">
+                    {% if v.image %}<img src="{{ v.image }}" alt="{{ v.name }}" class="option-pill__img" />{% endif %}
+                    {{ v.name }}{% if v.price %} ({{ v.price_prefix }}{{ v.price }}){% endif %}
+                  </button>
+                  {% endfor %}
+                </div>
+                {# Hidden inputs appended dynamically by JS for checked pills #}
+              </div>
+              {% endif %}
 
-            {% if option.type == 'textarea' %}
-            <div class="form-group{% if option.required %} required{% endif %}">
-              <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
-              <textarea name="option[{{ option.product_option_id }}]" rows="5" placeholder="{{ option.name }}" id="input-option{{ option.product_option_id }}" class="form-control">{{ option.value }}</textarea>
-            </div>
-            {% endif %}
+              {% if option.type == 'text' %}
+              <div class="form-group{% if option.required %} required{% endif %}">
+                <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
+                <input type="text" name="option[{{ option.product_option_id }}]" value="{{ option.value }}" placeholder="{{ option.name }}" id="input-option{{ option.product_option_id }}" class="form-control" />
+              </div>
+              {% endif %}
 
-            {% if option.type == 'file' %}
-            <div class="form-group{% if option.required %} required{% endif %}">
-              <label class="control-label">{{ option.name }}</label>
-              <button type="button" id="button-upload{{ option.product_option_id }}" class="btn btn-default btn-block">
-                <i class="material-icons">upload</i> {{ button_upload }}
-              </button>
-              <input type="hidden" name="option[{{ option.product_option_id }}]" value="" id="input-option{{ option.product_option_id }}" />
-            </div>
-            {% endif %}
+              {% if option.type == 'textarea' %}
+              <div class="form-group{% if option.required %} required{% endif %}">
+                <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
+                <textarea name="option[{{ option.product_option_id }}]" rows="5" placeholder="{{ option.name }}" id="input-option{{ option.product_option_id }}" class="form-control">{{ option.value }}</textarea>
+              </div>
+              {% endif %}
 
-            {# Date / time options — native HTML5 inputs, no jQuery plugin needed #}
-            {% if option.type == 'date' %}
-            <div class="form-group{% if option.required %} required{% endif %}">
-              <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
-              <input type="date" name="option[{{ option.product_option_id }}]" value="{{ option.value }}" id="input-option{{ option.product_option_id }}" class="form-control" />
-            </div>
-            {% endif %}
+              {% if option.type == 'file' %}
+              <div class="form-group{% if option.required %} required{% endif %}">
+                <label class="control-label">{{ option.name }}</label>
+                <button type="button" id="button-upload{{ option.product_option_id }}" class="btn btn-upload">
+                  <i class="material-icons">upload</i> {{ button_upload }}
+                </button>
+                <input type="hidden" name="option[{{ option.product_option_id }}]" value="" id="input-option{{ option.product_option_id }}" />
+              </div>
+              {% endif %}
 
-            {% if option.type == 'datetime' %}
-            <div class="form-group{% if option.required %} required{% endif %}">
-              <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
-              <input type="datetime-local" name="option[{{ option.product_option_id }}]" value="{{ option.value }}" id="input-option{{ option.product_option_id }}" class="form-control" />
-            </div>
-            {% endif %}
+              {% if option.type == 'date' %}
+              <div class="form-group{% if option.required %} required{% endif %}">
+                <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
+                <input type="date" name="option[{{ option.product_option_id }}]" value="{{ option.value }}" id="input-option{{ option.product_option_id }}" class="form-control" />
+              </div>
+              {% endif %}
 
-            {% if option.type == 'time' %}
-            <div class="form-group{% if option.required %} required{% endif %}">
-              <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
-              <input type="time" name="option[{{ option.product_option_id }}]" value="{{ option.value }}" id="input-option{{ option.product_option_id }}" class="form-control" />
-            </div>
-            {% endif %}
+              {% if option.type == 'datetime' %}
+              <div class="form-group{% if option.required %} required{% endif %}">
+                <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
+                <input type="datetime-local" name="option[{{ option.product_option_id }}]" value="{{ option.value }}" id="input-option{{ option.product_option_id }}" class="form-control" />
+              </div>
+              {% endif %}
 
-            {% endfor %}
+              {% if option.type == 'time' %}
+              <div class="form-group{% if option.required %} required{% endif %}">
+                <label class="control-label" for="input-option{{ option.product_option_id }}">{{ option.name }}</label>
+                <input type="time" name="option[{{ option.product_option_id }}]" value="{{ option.value }}" id="input-option{{ option.product_option_id }}" class="form-control" />
+              </div>
+              {% endif %}
+
+              {% endfor %}
+            </div>
             {% endif %}
 
             {% if recurrings %}
-            <hr>
-            <h3>{{ text_payment_recurring }}</h3>
-            <div class="form-group required">
-              <select name="recurring_id" class="form-control">
-                <option value="">{{ text_select }}</option>
-                {% for recurring in recurrings %}
-                <option value="{{ recurring.recurring_id }}">{{ recurring.name }}</option>
-                {% endfor %}
-              </select>
-              <div class="help-block" id="recurring-description"></div>
+            <div class="product-recurring-section">
+              <h3>{{ text_payment_recurring }}</h3>
+              <div class="form-group required">
+                <select name="recurring_id" class="form-control">
+                  <option value="">{{ text_select }}</option>
+                  {% for recurring in recurrings %}
+                  <option value="{{ recurring.recurring_id }}">{{ recurring.name }}</option>
+                  {% endfor %}
+                </select>
+                <div class="help-block" id="recurring-description"></div>
+              </div>
             </div>
             {% endif %}
 
-            <div class="form-group">
-              <label class="control-label" for="input-quantity">{{ entry_qty }}</label>
-              <input type="number" name="quantity" value="{{ minimum }}" min="1" id="input-quantity" class="form-control" />
+            {# Payment Options #}
+            {% if price %}
+            <div class="payment-options">
+              <h3>Payment Options</h3>
+              <div class="payment-options-grid">
+                <label class="payment-card payment-card--active" id="payment-cash">
+                  <input type="radio" name="payment_option" value="cash" checked hidden />
+                  <div class="payment-card__price">
+                    {% if special %}
+                    <span class="payment-card__amount">{{ special }}</span>
+                    <span class="payment-card__old">{{ price }}</span>
+                    {% else %}
+                    <span class="payment-card__amount">{{ price }}</span>
+                    {% endif %}
+                  </div>
+                  <div class="payment-card__label">Cash Discount Price</div>
+                  <div class="payment-card__sub">Online / Cash Payment</div>
+                </label>
+                {% if special %}
+                <label class="payment-card" id="payment-emi">
+                  <input type="radio" name="payment_option" value="emi" hidden />
+                  <div class="payment-card__price">
+                    <span class="payment-card__amount payment-card__amount--emi">{{ price }}</span>
+                  </div>
+                  <div class="payment-card__label">Regular Price: {{ price }}</div>
+                  <div class="payment-card__sub">0% EMI for up to 12 Months***</div>
+                </label>
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
+
+            {# Quantity + Buy Now #}
+            <div class="product-buy-row">
+              <div class="product-qty-control">
+                <button type="button" class="qty-btn" id="qty-minus"><i class="material-icons">remove</i></button>
+                <input type="number" name="quantity" value="{{ minimum }}" min="1" id="input-quantity" class="qty-input" />
+                <button type="button" class="qty-btn" id="qty-plus"><i class="material-icons">add</i></button>
+              </div>
               <input type="hidden" name="product_id" value="{{ product_id }}" />
-              <br />
-              <button type="button" id="button-cart" class="btn btn-primary btn-lg btn-block">{{ button_cart }}</button>
+              <button type="button" id="button-cart" class="btn-buy-now">Buy Now</button>
             </div>
 
             {% if minimum > 1 %}
@@ -221,131 +285,161 @@
               <i class="material-icons">info</i> {{ text_minimum }}
             </div>
             {% endif %}
+
+            {# {% if tax %}<div class="product-tax">{{ text_tax }} {{ tax }}</div>{% endif %}
+            {% if points %}<div class="product-points">{{ text_points }} {{ points }}</div>{% endif %} #}
+            {% if discounts %}
+            <ul class="product-discounts">
+              {% for discount in discounts %}
+              <li>{{ discount.quantity }}{{ text_discount }}{{ discount.price }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
           </div>
         </div>
-
       </div>{# /.product-detail-grid #}
 
-      {# ── Tabs: description, specs, reviews — full width below grid ── #}
-      <div class="product-tabs">
-        <ul class="product-tab-nav" role="tablist">
-          <li class="product-tab-item active">
-            <a href="#tab-description" class="product-tab-link" role="tab">{{ tab_description }}</a>
-          </li>
-          {% if attribute_groups %}
-          <li class="product-tab-item">
-            <a href="#tab-specification" class="product-tab-link" role="tab">{{ tab_attribute }}</a>
-          </li>
-          {% endif %}
-          {% if review_status %}
-          <li class="product-tab-item">
-            <a href="#tab-review" class="product-tab-link" role="tab">{{ tab_review }}</a>
-          </li>
-          {% endif %}
-        </ul>
-        <div class="product-tab-content">
-          <div class="product-tab-pane active" id="tab-description">{{ description }}</div>
-          {% if attribute_groups %}
-          <div class="product-tab-pane" id="tab-specification">
-            <table class="spec-table">
-              {% for attribute_group in attribute_groups %}
-              <thead>
-                <tr><td colspan="2"><strong>{{ attribute_group.name }}</strong></td></tr>
-              </thead>
-              <tbody>
-              {% for attribute in attribute_group.attribute %}
-              <tr>
-                <td>{{ attribute.name }}</td>
-                <td>{{ attribute.text }}</td>
-              </tr>
-              {% endfor %}
-              </tbody>
-              {% endfor %}
-            </table>
+      {# ── Tabs + Sidebar Layout ── #}
+      <div class="product-lower-grid">
+        {# Left: Tabs #}
+        <div class="product-tabs-wrapper">
+          <div class="product-tabs">
+            <ul class="product-tab-nav" role="tablist">
+              {% if attribute_groups %}
+              <li class="product-tab-item active">
+                <a href="#tab-specification" class="product-tab-link" role="tab">Specification</a>
+              </li>
+              <li class="product-tab-item">
+                <a href="#tab-description" class="product-tab-link" role="tab">{{ tab_description }}</a>
+              </li>
+              {% else %}
+              <li class="product-tab-item active">
+                <a href="#tab-description" class="product-tab-link" role="tab">{{ tab_description }}</a>
+              </li>
+              {% endif %}
+              {% if review_status %}
+              <li class="product-tab-item">
+                <a href="#tab-review" class="product-tab-link" role="tab">{{ tab_review }}</a>
+              </li>
+              {% endif %}
+            </ul>
+            <div class="product-tab-content">
+              {% if attribute_groups %}
+              <div class="product-tab-pane active" id="tab-specification">
+                <table class="spec-table">
+                  {% for attribute_group in attribute_groups %}
+                  <thead>
+                    <tr><td colspan="2"><strong>{{ attribute_group.name }}</strong></td></tr>
+                  </thead>
+                  <tbody>
+                  {% for attribute in attribute_group.attribute %}
+                  <tr>
+                    <td>{{ attribute.name }}</td>
+                    <td>{{ attribute.text }}</td>
+                  </tr>
+                  {% endfor %}
+                  </tbody>
+                  {% endfor %}
+                </table>
+              </div>
+              <div class="product-tab-pane" id="tab-description">{{ description }}</div>
+              {% else %}
+              <div class="product-tab-pane active" id="tab-description">{{ description }}</div>
+              {% endif %}
+              {% if review_status %}
+              <div class="product-tab-pane" id="tab-review">
+                <div class="review-tab-header">
+                  <div>
+                    <h3>{{ tab_review }}</h3>
+                    <p class="review-tab-subtitle">Get specific details about this product from customers who own it.</p>
+                  </div>
+                  {% if review_guest %}
+                  <button type="button" class="btn-write-review" id="btn-toggle-review-form">Write a Review</button>
+                  {% endif %}
+                </div>
+                <div id="review"></div>
+                <form id="form-review" class="review-form" style="display:none;">
+                  {% if review_guest %}
+                  <h3>{{ text_write }}</h3>
+                  <div class="form-group required">
+                    <label class="control-label" for="input-name">{{ entry_name }}</label>
+                    <input type="text" name="name" value="{{ customer_name }}" id="input-name" class="form-control" />
+                  </div>
+                  <div class="form-group required">
+                    <label class="control-label" for="input-review">{{ entry_review }}</label>
+                    <textarea name="text" rows="5" id="input-review" class="form-control"></textarea>
+                    <div class="help-block">{{ text_note }}</div>
+                  </div>
+                  <div class="form-group required">
+                    <label class="control-label">{{ entry_rating }}</label>
+                    <div class="rating-input">
+                      {% for i in 1..5 %}
+                      <label class="rating-star" title="{{ i }} star{{ i > 1 ? 's' : '' }}">
+                        <input type="radio" name="rating" value="{{ i }}" hidden />
+                        <i class="material-icons">star_border</i>
+                      </label>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {{ captcha }}
+                  <div class="review-form-actions">
+                    <button type="button" id="button-review" class="btn-submit-review">{{ button_continue }}</button>
+                  </div>
+                  {% else %}
+                  {{ text_login }}
+                  {% endif %}
+                </form>
+              </div>
+              {% endif %}
+            </div>
           </div>
-          {% endif %}
-          {% if review_status %}
-          <div class="product-tab-pane" id="tab-review">
-            <form id="form-review">
-              <div id="review"></div>
-              <h2>{{ text_write }}</h2>
-              {% if review_guest %}
-              <div class="form-group required">
-                <label class="control-label" for="input-name">{{ entry_name }}</label>
-                <input type="text" name="name" value="{{ customer_name }}" id="input-name" class="form-control" />
-              </div>
-              <div class="form-group required">
-                <label class="control-label" for="input-review">{{ entry_review }}</label>
-                <textarea name="text" rows="5" id="input-review" class="form-control"></textarea>
-                <div class="help-block">{{ text_note }}</div>
-              </div>
-              <div class="form-group required">
-                <label class="control-label">{{ entry_rating }}</label>
-                <div class="rating-input">
-                  {{ entry_bad }}&nbsp;
-                  <input type="radio" name="rating" value="1" />
-                  <input type="radio" name="rating" value="2" />
-                  <input type="radio" name="rating" value="3" />
-                  <input type="radio" name="rating" value="4" />
-                  <input type="radio" name="rating" value="5" />
-                  {{ entry_good }}
+        </div>
+
+        {# Right: Sidebar #}
+        <div class="product-sidebar">
+          {% if products %}
+          <div class="sidebar-card">
+            <h3 class="sidebar-card__title">Related Product</h3>
+            <div class="related-products-list">
+              {% for product in products %}
+              <div class="related-product-item">
+                <a href="{{ product.href }}" class="related-product-item__img">
+                  <img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}" />
+                </a>
+                <div class="related-product-item__info">
+                  <a href="{{ product.href }}" class="related-product-item__name">{{ product.name }}</a>
+                  {% if product.price %}
+                  <div class="related-product-item__price">
+                    {% if product.special %}
+                    <span class="price-new">{{ product.special }}</span>
+                    <span class="price-old">{{ product.price }}</span>
+                    {% else %}
+                    <span class="price-current">{{ product.price }}</span>
+                    {% endif %}
+                  </div>
+                  {% endif %}
+                  <button type="button" class="related-product-item__compare" onclick="compare.add('{{ product.product_id }}');">
+                    <i class="material-icons">add_box</i> Add to Compare
+                  </button>
                 </div>
               </div>
-              {{ captcha }}
-              <div class="buttons">
-                <button type="button" id="button-review" class="btn btn-primary">{{ button_continue }}</button>
-              </div>
-              {% else %}
-              {{ text_login }}
-              {% endif %}
-            </form>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          {% if tags %}
+          <div class="sidebar-card">
+            <h3 class="sidebar-card__title">Tags</h3>
+            <div class="product-tags">
+              {% for i in 0..tags|length - 1 %}
+              <a href="{{ tags[i].href }}" class="product-tag-pill">{{ tags[i].tag }}</a>
+              {% endfor %}
+            </div>
           </div>
           {% endif %}
         </div>
       </div>
-
-      {% if products %}
-      <h3>{{ text_related }}</h3>
-      <div class="related-products-grid">
-        {% for product in products %}
-        <div class="product-layout">
-          <div class="product-thumb">
-            <div class="image"><a href="{{ product.href }}"><img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}" /></a></div>
-            <div class="caption">
-              <h4><a href="{{ product.href }}">{{ product.name }}</a></h4>
-              <p>{{ product.description }}</p>
-              {% if product.price %}
-              <div class="price">
-                {% if not product.special %}{{ product.price }}
-                {% else %}<span class="price-new">{{ product.special }}</span> <span class="price-old">{{ product.price }}</span>{% endif %}
-                {% if product.tax %}<span class="price-tax">{{ text_tax }} {{ product.tax }}</span>{% endif %}
-              </div>
-              {% endif %}
-            </div>
-            <div class="button-group">
-              <button type="button" class="btn-cart" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}');">
-                <i class="material-icons">shopping_cart</i> {{ button_cart }}
-              </button>
-              <button type="button" class="btn-compare" title="{{ button_wishlist }}" onclick="wishlist.add('{{ product.product_id }}');">
-                <i class="material-icons">favorite_border</i>
-              </button>
-              <button type="button" class="btn-compare" title="{{ button_compare }}" onclick="compare.add('{{ product.product_id }}');">
-                <i class="material-icons">compare_arrows</i>
-              </button>
-            </div>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      {% if tags %}
-      <p>{{ text_tags }}
-        {% for i in 0..tags|length - 1 %}
-        <a href="{{ tags[i].href }}">{{ tags[i].tag }}</a>{% if i < (tags|length - 1) %}, {% endif %}
-        {% endfor %}
-      </p>
-      {% endif %}
 
       {{ content_bottom }}
     </div>

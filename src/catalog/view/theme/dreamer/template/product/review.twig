@@ -1,0 +1,25 @@
+{% if reviews %}
+{% for review in reviews %}
+<div class="review-card">
+  <div class="review-card__header">
+    <strong class="review-card__author">{{ review.author }}</strong>
+    <span class="review-card__date">{{ review.date_added }}</span>
+  </div>
+  <div class="review-card__rating">
+    {% for i in 1..5 %}
+    <i class="material-icons">{% if review.rating >= i %}star{% else %}star_border{% endif %}</i>
+    {% endfor %}
+  </div>
+  <div class="review-card__text">{{ review.text }}</div>
+</div>
+{% endfor %}
+<div class="review-pagination">
+  <div class="review-pagination__links">{{ pagination }}</div>
+  <div class="review-pagination__results">{{ results }}</div>
+</div>
+{% else %}
+<div class="review-empty">
+  <i class="material-icons review-empty__icon">rate_review</i>
+  <p>This product has no reviews yet. Be the first one to write a review.</p>
+</div>
+{% endif %}

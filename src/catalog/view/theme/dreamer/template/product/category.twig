@@ -1,5 +1,5 @@
 {{ header }}
-<div id="product-category" class="container{% if column_left or column_right %} has-sidebar{% endif %}">
+<div id="product-category" class="container">
 
   {# Breadcrumbs #}
   {% if breadcrumbs %}
@@ -10,67 +10,163 @@
   </ul>
   {% endif %}
 
+  
+
+  {# Subcategory pills (full width) #}
+  {% if categories %}
+  <div class="category-subcats">
+    {% for cat in categories %}
+    <a href="{{ cat.href }}" class="subcat-pill">{{ cat.name }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Two-column layout: filter sidebar + product area #}
   <div class="category-page-layout">
+{% if products %}
+    {# LEFT: Filter sidebar #}
+    <aside class="category-filter-sidebar" id="filter-sidebar"
+           data-price-min="{{ slider_price_min }}"
+           data-price-max="{{ slider_price_max }}">
 
-    {# Left sidebar (filter) #}
-    {% if column_left %}{{ column_left }}{% endif %}
+      <div class="filter-sidebar-header">
+        <span class="filter-sidebar-title">Filter</span>
+        <button class="filter-clear-btn" id="filter-clear-all" type="button">Clear All</button>
+      </div>
 
-    {# Main content #}
+      {# Price Range #}
+      <div class="filter-group" id="filter-group-price">
+        <div class="filter-group-header" data-target="price-body">
+          <span>Price Range</span>
+          <i class="material-icons filter-toggle-icon">expand_less</i>
+        </div>
+        <div class="filter-group-body" id="price-body">
+          <div class="price-range-slider">
+            <div class="price-slider-track">
+              <div class="price-slider-fill" id="price-slider-fill"></div>
+              <input type="range" id="price-slider-min" class="price-slider-input"
+                     min="{{ slider_price_min }}" max="{{ slider_price_max }}" step="100"
+                     value="{{ current_price_min ?: slider_price_min }}" />
+              <input type="range" id="price-slider-max" class="price-slider-input"
+                     min="{{ slider_price_min }}" max="{{ slider_price_max }}" step="100"
+                     value="{{ current_price_max ?: slider_price_max }}" />
+            </div>
+            <div class="price-range-inputs">
+              <div class="price-input-group">
+                <input type="number" id="price-min-input"
+                       value="{{ current_price_min ?: slider_price_min }}"
+                       placeholder="0" min="0" />
+              </div>
+              <div class="price-range-sep">&ndash;</div>
+              <div class="price-input-group">
+                <input type="number" id="price-max-input"
+                       value="{{ current_price_max ?: slider_price_max }}"
+                       placeholder="Any" min="0" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# Availability #}
+      <div class="filter-group" id="filter-group-availability">
+        <div class="filter-group-header" data-target="availability-body">
+          <span>Availability</span>
+          <i class="material-icons filter-toggle-icon">expand_less</i>
+        </div>
+        <div class="filter-group-body" id="availability-body">
+          <label class="filter-check-label">
+            <input type="checkbox" name="in_stock" value="1"
+                   {% if current_in_stock %}checked{% endif %}
+                   class="filter-checkbox" data-type="in_stock" />
+            <span>In Stock</span>
+          </label>
+          {% for status in filter_stock_statuses %}
+          <label class="filter-check-label">
+            <input type="checkbox" name="stock_status" value="{{ status.stock_status_id }}"
+                   {% if status.stock_status_id in current_stock_status|split(',') %}checked{% endif %}
+                   class="filter-checkbox" data-type="stock_status" />
+            <span>{{ status.name }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      {# Brand / Manufacturer #}
+      {% if filter_manufacturers %}
+      <div class="filter-group" id="filter-group-brand">
+        <div class="filter-group-header" data-target="brand-body">
+          <span>Brand</span>
+          <i class="material-icons filter-toggle-icon">expand_less</i>
+        </div>
+        <div class="filter-group-body" id="brand-body">
+          {% for mfr in filter_manufacturers %}
+          <label class="filter-check-label">
+            <input type="checkbox" name="manufacturer" value="{{ mfr.manufacturer_id }}"
+                   {% if mfr.manufacturer_id in current_manufacturer|split(',') %}checked{% endif %}
+                   class="filter-checkbox" data-type="manufacturer" />
+            <span>{{ mfr.name }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# Standard OC Filter Groups #}
+      {% for group in filter_groups %}
+      <div class="filter-group" id="filter-group-{{ group.filter_group_id }}">
+        <div class="filter-group-header" data-target="fg-{{ group.filter_group_id }}-body">
+          <span>{{ group.name }}</span>
+          <i class="material-icons filter-toggle-icon">expand_less</i>
+        </div>
+        <div class="filter-group-body" id="fg-{{ group.filter_group_id }}-body">
+          {% for f in group.filter %}
+          <label class="filter-check-label">
+            <input type="checkbox" name="filter" value="{{ f.filter_id }}"
+                   {% if f.filter_id in current_filter|split(',') %}checked{% endif %}
+                   class="filter-checkbox" data-type="filter" />
+            <span>{{ f.name }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+ {% endif %}
+    </aside>
+
+    {# RIGHT: Product area #}
     <div id="content">
       {{ content_top }}
 
-      {# Category hero: image + heading + description #}
-      {% if thumb or description %}
-      <div class="category-hero">
-        {% if thumb %}
-        <div class="category-hero-img">
-          <img src="{{ thumb }}" alt="{{ heading_title }}" title="{{ heading_title }}" />
-        </div>
-        {% endif %}
-        <div class="category-hero-info">
-          <h1>{{ heading_title }}</h1>
-          {% if description %}<div class="category-description">{{ description }}</div>{% endif %}
-        </div>
-      </div>
-      {% else %}
-      <h1>{{ heading_title }}</h1>
-      {% endif %}
-
-      {# Subcategory pills #}
-      {% if categories %}
-      <div class="category-subcats">
-        {% for cat in categories %}
-        <a href="{{ cat.href }}" class="subcat-pill">{{ cat.name }}</a>
-        {% endfor %}
-      </div>
-      {% endif %}
-
       {% if products %}
 
-      {# Toolbar: heading + show + sort #}
+      {# Toolbar #}
       <div class="category-toolbar">
         <h2 class="toolbar-title">{{ heading_title }}</h2>
         <div class="toolbar-right">
+          <button class="filter-mobile-toggle" id="filter-mobile-toggle" type="button">
+            <i class="material-icons">tune</i> Filter
+          </button>
           <div class="toolbar-limit">
             <label for="input-limit">Show:</label>
-            <select id="input-limit" onchange="location = this.value;">
+            <select id="input-limit" class="toolbar-select" data-type="limit">
               {% for limits in limits %}
               {% if limits.value == limit %}
-              <option value="{{ limits.href }}" selected="selected">{{ limits.text }}</option>
+              <option value="{{ limits.value }}" selected="selected">{{ limits.text }}</option>
               {% else %}
-              <option value="{{ limits.href }}">{{ limits.text }}</option>
+              <option value="{{ limits.value }}">{{ limits.text }}</option>
               {% endif %}
               {% endfor %}
             </select>
           </div>
           <div class="toolbar-sort">
             <label for="input-sort">Sort By:</label>
-            <select id="input-sort" onchange="location = this.value;">
+            <select id="input-sort" class="toolbar-select" data-type="sort">
               {% for sorts in sorts %}
               {% if sorts.value == '%s-%s'|format(sort, order) %}
-              <option value="{{ sorts.href }}" selected="selected">{{ sorts.text }}</option>
+              <option value="{{ sorts.value }}" selected="selected">{{ sorts.text }}</option>
               {% else %}
-              <option value="{{ sorts.href }}">{{ sorts.text }}</option>
+              <option value="{{ sorts.value }}">{{ sorts.text }}</option>
               {% endif %}
               {% endfor %}
             </select>
@@ -78,49 +174,56 @@
         </div>
       </div>
 
-      {# Product grid #}
-      <div class="product-grid-container">
-        {% for product in products %}
-        <div class="product-layout product-grid">
-          <div class="product-thumb">
-            <div class="image">
-              {% if product.special %}<span class="badge-save">Save: {{ product.special }}</span>{% endif %}
-              <a href="{{ product.href }}">
-                <img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}" />
-              </a>
-            </div>
-            <div class="caption">
-              <h4><a href="{{ product.href }}">{{ product.name }}</a></h4>
-              {% if product.description %}<p class="product-desc">{{ product.description }}</p>{% endif %}
-              {% if product.price %}
-              <p class="price">
-                {% if product.special %}
-                <span class="price-new">{{ product.special }}</span>
-                <span class="price-old">{{ product.price }}</span>
-                {% else %}
-                {{ product.price }}
+      {# Product grid wrapper (AJAX target) #}
+      <div id="product-list-wrapper">
+        <div class="product-grid-container" id="product-grid">
+          {% for product in products %}
+          <div class="product-layout product-grid">
+            <div class="product-thumb">
+              <div class="image">
+                {% if product.special %}<span class="badge-save">Save: {{ product.special }}</span>{% endif %}
+                <a href="{{ product.href }}">
+                  <img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}" />
+                </a>
+              </div>
+              <div class="caption">
+                <h4><a href="{{ product.href }}">{{ product.name }}</a></h4>
+                {% if product.description %}<p class="product-desc">{{ product.description }}</p>{% endif %}
+                {% if product.price %}
+                <p class="price">
+                  {% if product.special %}
+                  <span class="price-new">{{ product.special }}</span>
+                  <span class="price-old">{{ product.price }}</span>
+                  {% else %}
+                  {{ product.price }}
+                  {% endif %}
+                </p>
                 {% endif %}
-              </p>
-              {% endif %}
-            </div>
-            <div class="button-group">
-              <button type="button" class="btn-cart" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}');">
-                <i class="material-icons">shopping_cart</i>
-                <span>Buy Now</span>
-              </button>
-              <button type="button" class="btn-compare-text" onclick="compare.add('{{ product.product_id }}');">
-                <i class="material-icons">library_add</i> Add to Compare
-              </button>
+              </div>
+              <div class="button-group">
+                <button type="button" class="btn-cart" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}');">
+                  <i class="material-icons">shopping_cart</i>
+                  <span>Buy Now</span>
+                </button>
+                <button type="button" class="btn-compare-text" onclick="compare.add('{{ product.product_id }}');">
+                  <i class="material-icons">library_add</i> Add to Compare
+                </button>
+              </div>
             </div>
           </div>
+          {% endfor %}
         </div>
-        {% endfor %}
+
+        {# Spinner overlay #}
+        <div id="product-list-spinner">
+          <div class="spinner"></div>
+        </div>
       </div>
 
       {# Pagination #}
       <div class="category-pagination">
-        <div class="pagination-left">{{ pagination }}</div>
-        <div class="result-count">{{ results }}</div>
+        <div class="pagination-left" id="pagination-wrapper">{{ pagination }}</div>
+        <div class="result-count" id="results-wrapper">{{ results }}</div>
       </div>
 
       {% elseif not categories %}
@@ -131,7 +234,11 @@
       </div>
 
       {% endif %}
-
+{# Category intro: heading + description (full width) #}
+  <div class="category-intro">
+    <h1 class="category-main-title">{{ heading_title }}</h1>
+    {% if description %}<div class="category-description">{{ description }}</div>{% endif %}
+  </div>
       {{ content_bottom }}
     </div>
 
@@ -139,5 +246,9 @@
     {% if column_right %}{{ column_right }}{% endif %}
 
   </div>
+
+  {# Mobile overlay #}
+  <div class="filter-sidebar-overlay" id="filter-sidebar-overlay"></div>
+
 </div>
 {{ footer }}

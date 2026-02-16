@@ -150,7 +150,25 @@ class ModelCatalogProduct extends Model {
 		}
 
 		if (!empty($data['filter_manufacturer_id'])) {
-			$sql .= " AND p.manufacturer_id = '" . (int)$data['filter_manufacturer_id'] . "'";
+			$mfr_ids = array_map('intval', explode(',', $data['filter_manufacturer_id']));
+			$sql .= " AND p.manufacturer_id IN (" . implode(',', $mfr_ids) . ")";
+		}
+
+		if (isset($data['filter_price_min']) && $data['filter_price_min'] !== '') {
+			$sql .= " AND p.price >= '" . (float)$data['filter_price_min'] . "'";
+		}
+
+		if (isset($data['filter_price_max']) && $data['filter_price_max'] !== '') {
+			$sql .= " AND p.price <= '" . (float)$data['filter_price_max'] . "'";
+		}
+
+		if (!empty($data['filter_in_stock'])) {
+			$sql .= " AND p.quantity > 0";
+		}
+
+		if (!empty($data['filter_stock_status_id'])) {
+			$ss_ids = array_map('intval', explode(',', $data['filter_stock_status_id']));
+			$sql .= " AND p.stock_status_id IN (" . implode(',', $ss_ids) . ")";
 		}
 
 		$sql .= " GROUP BY p.product_id";
@@ -509,7 +527,25 @@ class ModelCatalogProduct extends Model {
 		}
 
 		if (!empty($data['filter_manufacturer_id'])) {
-			$sql .= " AND p.manufacturer_id = '" . (int)$data['filter_manufacturer_id'] . "'";
+			$mfr_ids = array_map('intval', explode(',', $data['filter_manufacturer_id']));
+			$sql .= " AND p.manufacturer_id IN (" . implode(',', $mfr_ids) . ")";
+		}
+
+		if (isset($data['filter_price_min']) && $data['filter_price_min'] !== '') {
+			$sql .= " AND p.price >= '" . (float)$data['filter_price_min'] . "'";
+		}
+
+		if (isset($data['filter_price_max']) && $data['filter_price_max'] !== '') {
+			$sql .= " AND p.price <= '" . (float)$data['filter_price_max'] . "'";
+		}
+
+		if (!empty($data['filter_in_stock'])) {
+			$sql .= " AND p.quantity > 0";
+		}
+
+		if (!empty($data['filter_stock_status_id'])) {
+			$ss_ids = array_map('intval', explode(',', $data['filter_stock_status_id']));
+			$sql .= " AND p.stock_status_id IN (" . implode(',', $ss_ids) . ")";
 		}
 
 		$query = $this->db->query($sql);

@@ -9,6 +9,7 @@ class ControllerProductCategory extends Controller {
 
 		$this->load->model('tool/image');
 		$this->document->addStyle('catalog/view/theme/dreamer/stylesheet/category.css');
+		$this->document->addScript('catalog/view/theme/dreamer/javascript/category.js', 'footer');
 
 		if (isset($this->request->get['filter'])) {
 			$filter = $this->request->get['filter'];
@@ -39,6 +40,13 @@ class ControllerProductCategory extends Controller {
 		} else {
 			$limit = $this->config->get('theme_' . $this->config->get('config_theme') . '_product_limit');
 		}
+
+		// New filter params
+		$price_min = isset($this->request->get['price_min']) ? $this->request->get['price_min'] : '';
+		$price_max = isset($this->request->get['price_max']) ? $this->request->get['price_max'] : '';
+		$filter_in_stock = isset($this->request->get['in_stock']) ? 1 : 0;
+		$filter_stock_status = isset($this->request->get['stock_status']) ? $this->request->get['stock_status'] : '';
+		$filter_manufacturer = isset($this->request->get['manufacturer']) ? preg_replace('/[^0-9,]/', '', $this->request->get['manufacturer']) : '';
 
 		$data['breadcrumbs'] = array();
 
@@ -114,11 +122,16 @@ class ControllerProductCategory extends Controller {
 			$data['description'] = html_entity_decode($category_info['description'], ENT_QUOTES, 'UTF-8');
 			$data['compare'] = $this->url->link('product/compare');
 
-			$url = '';
+			// Helper to append filter params to URL
+			$filter_url = '';
+			if ($filter) $filter_url .= '&filter=' . $filter;
+			if ($price_min !== '') $filter_url .= '&price_min=' . $price_min;
+			if ($price_max !== '') $filter_url .= '&price_max=' . $price_max;
+			if ($filter_in_stock) $filter_url .= '&in_stock=1';
+			if ($filter_stock_status) $filter_url .= '&stock_status=' . $filter_stock_status;
+			if ($filter_manufacturer) $filter_url .= '&manufacturer=' . $filter_manufacturer;
 
-			if (isset($this->request->get['filter'])) {
-				$url .= '&filter=' . $this->request->get['filter'];
-			}
+			$url = $filter_url;
 
 			if (isset($this->request->get['sort'])) {
 				$url .= '&sort=' . $this->request->get['sort'];
@@ -151,12 +164,17 @@ class ControllerProductCategory extends Controller {
 			$data['products'] = array();
 
 			$filter_data = array(
-				'filter_category_id' => $category_id,
-				'filter_filter'      => $filter,
-				'sort'               => $sort,
-				'order'              => $order,
-				'start'              => ($page - 1) * $limit,
-				'limit'              => $limit
+				'filter_category_id'     => $category_id,
+				'filter_filter'          => $filter,
+				'filter_manufacturer_id' => $filter_manufacturer,
+				'filter_price_min'       => $price_min,
+				'filter_price_max'       => $price_max,
+				'filter_in_stock'        => $filter_in_stock,
+				'filter_stock_status_id' => $filter_stock_status,
+				'sort'                   => $sort,
+				'order'                  => $order,
+				'start'                  => ($page - 1) * $limit,
+				'limit'                  => $limit
 			);
 
 			$product_total = $this->model_catalog_product->getTotalProducts($filter_data);
@@ -183,7 +201,7 @@ class ControllerProductCategory extends Controller {
 					$special = false;
 					$tax_price = (float)$result['price'];
 				}
-	
+
 				if ($this->config->get('config_tax')) {
 					$tax = $this->currency->format($tax_price, $this->session->data['currency']);
 				} else {
@@ -210,11 +228,8 @@ class ControllerProductCategory extends Controller {
 				);
 			}
 
-			$url = '';
-
-			if (isset($this->request->get['filter'])) {
-				$url .= '&filter=' . $this->request->get['filter'];
-			}
+			// Sort options URL
+			$url = $filter_url;
 
 			if (isset($this->request->get['limit'])) {
 				$url .= '&limit=' . $this->request->get['limit'];
@@ -278,11 +293,8 @@ class ControllerProductCategory extends Controller {
 				'href'  => $this->url->link('product/category', 'path=' . $this->request->get['path'] . '&sort=p.model&order=DESC' . $url)
 			);
 
-			$url = '';
-
-			if (isset($this->request->get['filter'])) {
-				$url .= '&filter=' . $this->request->get['filter'];
-			}
+			// Limit options URL
+			$url = $filter_url;
 
 			if (isset($this->request->get['sort'])) {
 				$url .= '&sort=' . $this->request->get['sort'];
@@ -306,11 +318,8 @@ class ControllerProductCategory extends Controller {
 				);
 			}
 
-			$url = '';
-
-			if (isset($this->request->get['filter'])) {
-				$url .= '&filter=' . $this->request->get['filter'];
-			}
+			// Pagination URL
+			$url = $filter_url;
 
 			if (isset($this->request->get['sort'])) {
 				$url .= '&sort=' . $this->request->get['sort'];
@@ -334,13 +343,25 @@ class ControllerProductCategory extends Controller {
 
 			$data['results'] = sprintf($this->language->get('text_pagination'), ($product_total) ? (($page - 1) * $limit) + 1 : 0, ((($page - 1) * $limit) > ($product_total - $limit)) ? $product_total : ((($page - 1) * $limit) + $limit), $product_total, ceil($product_total / $limit));
 
+			// AJAX response — return JSON only
+			if (isset($this->request->server['HTTP_X_REQUESTED_WITH']) && strtolower($this->request->server['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+				$this->response->addHeader('Content-Type: application/json');
+				$this->response->setOutput(json_encode(array(
+					'products'   => $data['products'],
+					'pagination' => $data['pagination'],
+					'results'    => $data['results'],
+					'total'      => $product_total
+				)));
+				return;
+			}
+
 			// http://googlewebmastercentral.blogspot.com/2011/09/pagination-with-relnext-and-relprev.html
 			if ($page == 1) {
 			    $this->document->addLink($this->url->link('product/category', 'path=' . $category_info['category_id']), 'canonical');
 			} else {
 				$this->document->addLink($this->url->link('product/category', 'path=' . $category_info['category_id'] . '&page='. $page), 'canonical');
 			}
-			
+
 			if ($page > 1) {
 			    $this->document->addLink($this->url->link('product/category', 'path=' . $category_info['category_id'] . (($page - 2) ? '&page='. ($page - 1) : '')), 'prev');
 			}
@@ -354,6 +375,32 @@ class ControllerProductCategory extends Controller {
 			$data['limit'] = $limit;
 
 			$data['continue'] = $this->url->link('common/home');
+
+			// Filter sidebar data
+			// Manufacturers in this category
+			$data['filter_manufacturers'] = array();
+			$manufacturer_query = $this->db->query("SELECT DISTINCT m.manufacturer_id, m.name FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "manufacturer m ON (p.manufacturer_id = m.manufacturer_id) LEFT JOIN " . DB_PREFIX . "product_to_category p2c ON (p.product_id = p2c.product_id) LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE p2c.category_id = '" . (int)$category_id . "' AND p.status = '1' AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "' AND m.manufacturer_id IS NOT NULL AND m.manufacturer_id > 0 ORDER BY m.name");
+			$data['filter_manufacturers'] = $manufacturer_query->rows;
+
+			// OC filter groups
+			$data['filter_groups'] = $this->model_catalog_category->getCategoryFilters($category_id);
+
+			// Stock statuses
+			$stock_status_query = $this->db->query("SELECT stock_status_id, name FROM " . DB_PREFIX . "stock_status WHERE language_id = '" . (int)$this->config->get('config_language_id') . "' ORDER BY name");
+			$data['filter_stock_statuses'] = $stock_status_query->rows;
+
+			// Price range bounds for slider
+			$price_range_query = $this->db->query("SELECT MIN(p.price) AS price_min, MAX(p.price) AS price_max FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_to_category p2c ON (p.product_id = p2c.product_id) LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) WHERE p2c.category_id = '" . (int)$category_id . "' AND p.status = '1' AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
+			$data['slider_price_min'] = (int)($price_range_query->row['price_min'] ?? 0);
+			$data['slider_price_max'] = (int)($price_range_query->row['price_max'] ?? 999999);
+
+			// Current filter values for template
+			$data['current_filter'] = $filter;
+			$data['current_manufacturer'] = $filter_manufacturer;
+			$data['current_price_min'] = $price_min;
+			$data['current_price_max'] = $price_max;
+			$data['current_in_stock'] = $filter_in_stock;
+			$data['current_stock_status'] = $filter_stock_status;
 
 			$data['column_left'] = $this->load->controller('common/column_left');
 			$data['column_right'] = $this->load->controller('common/column_right');

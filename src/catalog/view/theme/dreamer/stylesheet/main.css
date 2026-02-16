@@ -1247,7 +1247,7 @@ header.sticky {
 .cart-added-dialog {
     background: #fff;
     border-radius: 8px;
-    max-width: 540px;
+    max-width: 800px;
     width: 100%;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     position: relative;
@@ -1270,9 +1270,9 @@ header.sticky {
 
 .cart-added-body {
     display: flex;
-    gap: 20px;
     align-items: flex-start;
     margin-bottom: 20px;
+    justify-content: space-between;
 }
 
 .cart-added-msg {

@@ -1,7 +1,8 @@
 /**
  * DREAMER THEME - PRODUCT.JS
- * Product detail page: lightbox, tabs, add-to-cart with options,
- * file upload, review load/submit, recurring description.
+ * Product detail page: lightbox, tabs, thumbnail swap, option pills,
+ * qty stepper, add-to-cart with cart popup, copy link, review form,
+ * file upload, recurring description, rating stars.
  * No jQuery. Uses fetch() and native <dialog>.
  */
 
@@ -15,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* =================================================================
        PRODUCT TABS
-       Replaces: data-toggle="tab" Bootstrap behaviour
        ================================================================= */
 
     var tabLinks = document.querySelectorAll('.product-tab-link');
@@ -24,33 +24,65 @@ document.addEventListener('DOMContentLoaded', function () {
     tabLinks.forEach(function (link) {
         link.addEventListener('click', function (e) {
             e.preventDefault();
-
             var targetId = this.getAttribute('href').replace('#', '');
-
             tabLinks.forEach(function (l) { l.closest('.product-tab-item').classList.remove('active'); });
             tabPanes.forEach(function (p) { p.classList.remove('active'); });
-
             this.closest('.product-tab-item').classList.add('active');
             var pane = document.getElementById(targetId);
             if (pane) pane.classList.add('active');
         });
     });
 
-    /* Review tab links in the rating section */
+    /* Review tab links in rating section */
     document.querySelectorAll('a.review-link').forEach(function (link) {
         link.addEventListener('click', function (e) {
             e.preventDefault();
             var reviewTab = document.querySelector('.product-tab-link[href="#tab-review"]');
             if (reviewTab) reviewTab.click();
+            var tabsEl = document.querySelector('.product-tabs');
+            if (tabsEl) tabsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
 
+    /* "View More Info" link → scroll to description tab */
+    var viewMoreLink = document.getElementById('view-more-link');
+    if (viewMoreLink) {
+        viewMoreLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            var descTab = document.querySelector('.product-tab-link[href="#tab-description"]');
+            if (descTab) descTab.click();
+            var tabsEl = document.querySelector('.product-tabs');
+            if (tabsEl) tabsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
+
     /* =================================================================
-       IMAGE LIGHTBOX
-       Replaces: $.fn.magnificPopup
-       Uses native <dialog> element — supported in all modern browsers.
+       IMAGE GALLERY — Thumbnail swap + Lightbox
        ================================================================= */
 
+    var mainImage     = document.getElementById('main-image');
+    var mainImageLink = document.getElementById('main-image-link');
+    var thumbItems    = document.querySelectorAll('.product-thumb-item');
+
+    /* Click thumbnail → swap main image, update active state */
+    thumbItems.forEach(function (item) {
+        var link = item.querySelector('.product-thumb-link');
+        if (!link) return;
+
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            var thumbSrc = link.getAttribute('data-thumb');
+            var popupSrc = link.getAttribute('href');
+
+            if (mainImage && thumbSrc) mainImage.src = thumbSrc;
+            if (mainImageLink && popupSrc) mainImageLink.href = popupSrc;
+
+            thumbItems.forEach(function (t) { t.classList.remove('active'); });
+            item.classList.add('active');
+        });
+    });
+
+    /* Lightbox using native <dialog> */
     var dialog = document.createElement('dialog');
     dialog.id = 'product-lightbox';
     dialog.className = 'product-lightbox';
@@ -72,8 +104,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var lightboxPrev  = dialog.querySelector('.product-lightbox__prev');
     var lightboxNext  = dialog.querySelector('.product-lightbox__next');
 
-    var galleryLinks  = [];
-    var currentLbIdx  = 0;
+    var galleryLinks = [];
+    var currentLbIdx = 0;
 
     function buildGallery() {
         galleryLinks = Array.from(document.querySelectorAll('#product-thumbnails .product-thumb-link'));
@@ -87,13 +119,16 @@ document.addEventListener('DOMContentLoaded', function () {
         dialog.showModal();
     }
 
-    buildGallery();
-    galleryLinks.forEach(function (link, i) {
-        link.addEventListener('click', function (e) {
+    /* Click main image → open lightbox at current image */
+    if (mainImageLink) {
+        mainImageLink.addEventListener('click', function (e) {
             e.preventDefault();
-            openLightbox(i);
+            buildGallery();
+            var activeThumb = document.querySelector('.product-thumb-item.active .product-thumb-link');
+            var idx = activeThumb ? galleryLinks.indexOf(activeThumb) : 0;
+            openLightbox(idx >= 0 ? idx : 0);
         });
-    });
+    }
 
     lightboxClose.addEventListener('click', function () { dialog.close(); });
     dialog.addEventListener('click', function (e) { if (e.target === dialog) dialog.close(); });
@@ -107,14 +142,101 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.addEventListener('keydown', function (e) {
         if (!dialog.open) return;
-        if (e.key === 'Escape')       dialog.close();
-        if (e.key === 'ArrowLeft')    lightboxPrev.click();
-        if (e.key === 'ArrowRight')   lightboxNext.click();
+        if (e.key === 'Escape')     dialog.close();
+        if (e.key === 'ArrowLeft')  lightboxPrev.click();
+        if (e.key === 'ArrowRight') lightboxNext.click();
     });
 
     /* =================================================================
-       ADD TO CART (with product options)
-       Replaces: $('#button-cart').on('click', ...) inline script
+       OPTION PILLS (radio/select/checkbox as pill buttons)
+       ================================================================= */
+
+    document.querySelectorAll('.option-pills').forEach(function (container) {
+        var type     = container.getAttribute('data-type');
+        var optionId = container.getAttribute('data-option-id');
+        var pills    = container.querySelectorAll('.option-pill');
+
+        pills.forEach(function (pill) {
+            pill.addEventListener('click', function () {
+                var value = pill.getAttribute('data-value');
+
+                if (type === 'checkbox') {
+                    /* Toggle individual pill */
+                    pill.classList.toggle('active');
+                    /* Rebuild hidden inputs for checked values */
+                    var fg = container.closest('.form-group');
+                    fg.querySelectorAll('input[type="hidden"][name*="option"]').forEach(function (h) { h.remove(); });
+                    container.querySelectorAll('.option-pill.active').forEach(function (activePill) {
+                        var input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'option[' + optionId + '][]';
+                        input.value = activePill.getAttribute('data-value');
+                        fg.appendChild(input);
+                    });
+                } else {
+                    /* Single select: radio or select */
+                    pills.forEach(function (p) { p.classList.remove('active'); });
+                    pill.classList.add('active');
+                    var hidden = document.getElementById('input-option' + optionId);
+                    if (hidden) hidden.value = value;
+                }
+            });
+        });
+    });
+
+    /* =================================================================
+       QUANTITY STEPPER (+/- buttons)
+       ================================================================= */
+
+    var qtyInput = document.getElementById('input-quantity');
+    var qtyMinus = document.getElementById('qty-minus');
+    var qtyPlus  = document.getElementById('qty-plus');
+
+    if (qtyInput && qtyMinus && qtyPlus) {
+        var minQty = parseInt(qtyInput.min) || 1;
+
+        qtyMinus.addEventListener('click', function () {
+            var val = parseInt(qtyInput.value) || minQty;
+            if (val > minQty) qtyInput.value = val - 1;
+        });
+
+        qtyPlus.addEventListener('click', function () {
+            var val = parseInt(qtyInput.value) || minQty;
+            qtyInput.value = val + 1;
+        });
+    }
+
+    /* =================================================================
+       PAYMENT OPTION CARDS (toggle active)
+       ================================================================= */
+
+    document.querySelectorAll('.payment-card').forEach(function (card) {
+        card.addEventListener('click', function () {
+            document.querySelectorAll('.payment-card').forEach(function (c) {
+                c.classList.remove('payment-card--active');
+            });
+            card.classList.add('payment-card--active');
+        });
+    });
+
+    /* =================================================================
+       COPY LINK BUTTON
+       ================================================================= */
+
+    var copyBtn = document.getElementById('btn-copy-link');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', function () {
+            var url = copyBtn.getAttribute('data-url');
+            if (navigator.clipboard && url) {
+                navigator.clipboard.writeText(url).then(function () {
+                    notify.show('Link copied to clipboard!', 'success');
+                });
+            }
+        });
+    }
+
+    /* =================================================================
+       ADD TO CART (with product options + cart popup)
        ================================================================= */
 
     var cartBtn = document.getElementById('button-cart');
@@ -142,7 +264,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (el.name) formData.append(el.name, el.value);
             });
 
-            /* Convert FormData to URLSearchParams for consistent encoding */
             var body = new URLSearchParams(formData).toString();
 
             fetch('index.php?route=checkout/cart/add', {
@@ -158,15 +279,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (json.error) {
                     if (json.error.option) {
                         Object.keys(json.error.option).forEach(function (key) {
-                            var optId = 'input-option' + key.replace('_', '-');
-                            var el = document.getElementById(optId);
+                            var el = document.getElementById('input-option' + key);
+                            if (!el) {
+                                /* Try finding the option-pills container */
+                                var pills = document.querySelector('.option-pills[data-option-id="' + key + '"]');
+                                if (pills) el = pills;
+                            }
                             if (el) {
                                 var errDiv = document.createElement('div');
                                 errDiv.className = 'text-danger';
                                 errDiv.textContent = json.error.option[key];
-                                /* If inside an input-group, insert after the group wrapper */
-                                var parent = el.closest('.input-group') || el;
-                                parent.insertAdjacentElement('afterend', errDiv);
+                                var parent = el.closest('.form-group') || el;
+                                parent.appendChild(errDiv);
+                                parent.classList.add('has-error');
                             }
                         });
                     }
@@ -179,17 +304,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             recEl.insertAdjacentElement('afterend', errDiv);
                         }
                     }
-                    document.querySelectorAll('.text-danger').forEach(function (el) {
-                        var fg = el.closest('.form-group');
-                        if (fg) fg.classList.add('has-error');
-                    });
                 }
 
                 if (json.success) {
-                    notify.show(json.success, 'success');
-                    cart._updateTotal(json.total);
-                    cart._refreshDropdown();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    cart._updateBadges(json.total);
+                    cart._showAddedModal(json);
                 }
             })
             .catch(function () {
@@ -203,7 +322,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* =================================================================
        RECURRING SUBSCRIPTION DESCRIPTION
-       Replaces: $('select[name=recurring_id], input[name=quantity]').change(...)
        ================================================================= */
 
     function updateRecurringDescription() {
@@ -227,25 +345,21 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(function (r) { return r.json(); })
         .then(function (json) {
-            document.querySelectorAll('.dreamer-notify, .text-danger').forEach(function (el) { el.remove(); });
             if (json.success) descEl.innerHTML = json.success;
         });
     }
 
     var recurringSelect = document.querySelector('select[name="recurring_id"]');
-    var quantityInput = document.getElementById('input-quantity');
     if (recurringSelect) recurringSelect.addEventListener('change', updateRecurringDescription);
-    if (quantityInput)   quantityInput.addEventListener('change', updateRecurringDescription);
+    if (qtyInput) qtyInput.addEventListener('change', updateRecurringDescription);
 
     /* =================================================================
        FILE UPLOAD OPTION
-       Replaces: $('button[id^=button-upload]').on('click', ...)
        ================================================================= */
 
     document.querySelectorAll('button[id^="button-upload"]').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var node = btn;
-
             var existing = document.getElementById('form-upload');
             if (existing) existing.remove();
 
@@ -261,46 +375,43 @@ document.addEventListener('DOMContentLoaded', function () {
 
             fileInput.click();
 
-            var timer = setInterval(function () {
-                if (fileInput.value !== '') {
-                    clearInterval(timer);
-                    node.disabled = true;
+            fileInput.addEventListener('change', function () {
+                if (!fileInput.value) return;
+                node.disabled = true;
 
-                    var fd = new FormData(uploadForm);
-                    fetch('index.php?route=tool/upload', {
-                        method: 'POST',
-                        body: fd
-                    })
-                    .then(function (r) { return r.json(); })
-                    .then(function (json) {
-                        document.querySelectorAll('.text-danger').forEach(function (el) { el.remove(); });
+                var fd = new FormData(uploadForm);
+                fetch('index.php?route=tool/upload', {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (json) {
+                    document.querySelectorAll('.text-danger').forEach(function (el) { el.remove(); });
 
-                        if (json.error) {
-                            var errDiv = document.createElement('div');
-                            errDiv.className = 'text-danger';
-                            errDiv.textContent = json.error;
-                            node.insertAdjacentElement('afterend', errDiv);
-                        }
-                        if (json.success) {
-                            alert(json.success);
-                            var hiddenInput = node.closest('.form-group').querySelector('input[type="hidden"]');
-                            if (hiddenInput) hiddenInput.value = json.code;
-                        }
-                    })
-                    .catch(function () {
-                        notify.show('Upload failed. Please try again.', 'error');
-                    })
-                    .finally(function () {
-                        node.disabled = false;
-                    });
-                }
-            }, 500);
+                    if (json.error) {
+                        var errDiv = document.createElement('div');
+                        errDiv.className = 'text-danger';
+                        errDiv.textContent = json.error;
+                        node.insertAdjacentElement('afterend', errDiv);
+                    }
+                    if (json.success) {
+                        notify.show(json.success, 'success');
+                        var hiddenInput = node.closest('.form-group').querySelector('input[type="hidden"]');
+                        if (hiddenInput) hiddenInput.value = json.code;
+                    }
+                })
+                .catch(function () {
+                    notify.show('Upload failed. Please try again.', 'error');
+                })
+                .finally(function () {
+                    node.disabled = false;
+                });
+            });
         });
     });
 
     /* =================================================================
-       REVIEWS: load + submit + pagination
-       Replaces: $('#review').load(...) and $('#button-review').on('click', ...)
+       REVIEWS: load + submit + pagination + toggle form
        ================================================================= */
 
     var reviewContainer = document.getElementById('review');
@@ -311,7 +422,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(function (r) { return r.text(); })
             .then(function (html) {
                 reviewContainer.innerHTML = html;
-                /* Bind pagination links */
                 reviewContainer.querySelectorAll('.pagination a').forEach(function (link) {
                     link.addEventListener('click', function (e) {
                         e.preventDefault();
@@ -323,6 +433,50 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (reviewOn) loadReviews();
 
+    /* Toggle review form visibility */
+    var toggleReviewBtn = document.getElementById('btn-toggle-review-form');
+    var reviewForm = document.getElementById('form-review');
+    if (toggleReviewBtn && reviewForm) {
+        toggleReviewBtn.addEventListener('click', function () {
+            if (reviewForm.style.display === 'none') {
+                reviewForm.style.display = 'block';
+                reviewForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                reviewForm.style.display = 'none';
+            }
+        });
+    }
+
+    /* Star rating hover + click */
+    var ratingStars = document.querySelectorAll('.rating-star');
+    ratingStars.forEach(function (star, idx) {
+        star.addEventListener('mouseenter', function () {
+            ratingStars.forEach(function (s, i) {
+                var icon = s.querySelector('.material-icons');
+                icon.textContent = i <= idx ? 'star' : 'star_border';
+            });
+        });
+
+        star.addEventListener('click', function () {
+            ratingStars.forEach(function (s, i) {
+                s.classList.toggle('active', i <= idx);
+                var icon = s.querySelector('.material-icons');
+                icon.textContent = i <= idx ? 'star' : 'star_border';
+            });
+        });
+    });
+
+    var ratingContainer = document.querySelector('.rating-input');
+    if (ratingContainer) {
+        ratingContainer.addEventListener('mouseleave', function () {
+            ratingStars.forEach(function (s) {
+                var icon = s.querySelector('.material-icons');
+                icon.textContent = s.classList.contains('active') ? 'star' : 'star_border';
+            });
+        });
+    }
+
+    /* Submit review */
     var reviewBtn = document.getElementById('button-review');
     if (reviewBtn) {
         reviewBtn.addEventListener('click', function () {
@@ -345,10 +499,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     notify.show(json.success, 'success');
                     var nameInput   = formEl.querySelector('input[name="name"]');
                     var textArea    = formEl.querySelector('textarea[name="text"]');
-                    var ratingCheck = formEl.querySelector('input[name="rating"]:checked');
                     if (nameInput)   nameInput.value = '';
                     if (textArea)    textArea.value = '';
-                    if (ratingCheck) ratingCheck.checked = false;
+                    ratingStars.forEach(function (s) {
+                        s.classList.remove('active');
+                        s.querySelector('.material-icons').textContent = 'star_border';
+                    });
+                    reviewForm.style.display = 'none';
                 }
             })
             .catch(function () {
