@@ -15,44 +15,60 @@ document.addEventListener('DOMContentLoaded', function () {
     var reviewOn   = dataEl ? dataEl.getAttribute('data-review-status') === '1' : false;
 
     /* =================================================================
-       PRODUCT TABS
+       SECTION NAV — scroll to sections (replaces tab show/hide)
        ================================================================= */
 
-    var tabLinks = document.querySelectorAll('.product-tab-link');
-    var tabPanes = document.querySelectorAll('.product-tab-pane');
+    var tabLinks   = document.querySelectorAll('.product-tab-link');
+    var sections   = document.querySelectorAll('.product-section');
+    var navBar     = document.querySelector('.product-tabs');
+    var navOffset  = navBar ? navBar.offsetHeight + 16 : 60;
 
     tabLinks.forEach(function (link) {
         link.addEventListener('click', function (e) {
             e.preventDefault();
             var targetId = this.getAttribute('href').replace('#', '');
+            var section  = document.getElementById(targetId);
+            if (section) {
+                var top = section.getBoundingClientRect().top + window.pageYOffset - navOffset - 8;
+                window.scrollTo({ top: top, behavior: 'smooth' });
+            }
             tabLinks.forEach(function (l) { l.closest('.product-tab-item').classList.remove('active'); });
-            tabPanes.forEach(function (p) { p.classList.remove('active'); });
             this.closest('.product-tab-item').classList.add('active');
-            var pane = document.getElementById(targetId);
-            if (pane) pane.classList.add('active');
         });
     });
+
+    /* Scroll spy — highlight active tab based on scroll position */
+    function updateActiveTab() {
+        var scrollY = window.pageYOffset + navOffset + 40;
+        var activeLink = null;
+        sections.forEach(function (sec) {
+            if (sec.offsetTop <= scrollY) {
+                activeLink = document.querySelector('.product-tab-link[href="#' + sec.id + '"]');
+            }
+        });
+        if (activeLink) {
+            tabLinks.forEach(function (l) { l.closest('.product-tab-item').classList.remove('active'); });
+            activeLink.closest('.product-tab-item').classList.add('active');
+        }
+    }
+    window.addEventListener('scroll', updateActiveTab, { passive: true });
 
     /* Review tab links in rating section */
     document.querySelectorAll('a.review-link').forEach(function (link) {
         link.addEventListener('click', function (e) {
             e.preventDefault();
-            var reviewTab = document.querySelector('.product-tab-link[href="#tab-review"]');
-            if (reviewTab) reviewTab.click();
-            var tabsEl = document.querySelector('.product-tabs');
-            if (tabsEl) tabsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            var reviewLink = document.querySelector('.product-tab-link[href="#tab-review"]');
+            if (reviewLink) reviewLink.click();
         });
     });
 
-    /* "View More Info" link → scroll to description tab */
+    /* "View More Info" link → scroll to description section */
     var viewMoreLink = document.getElementById('view-more-link');
     if (viewMoreLink) {
         viewMoreLink.addEventListener('click', function (e) {
             e.preventDefault();
-            var descTab = document.querySelector('.product-tab-link[href="#tab-description"]');
-            if (descTab) descTab.click();
-            var tabsEl = document.querySelector('.product-tabs');
-            if (tabsEl) tabsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            var descLink = document.querySelector('.product-tab-link[href="#tab-description"]');
+            if (descLink) descLink.click();
         });
     }
 
@@ -71,10 +87,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         link.addEventListener('click', function (e) {
             e.preventDefault();
-            var thumbSrc = link.getAttribute('data-thumb');
             var popupSrc = link.getAttribute('href');
 
-            if (mainImage && thumbSrc) mainImage.src = thumbSrc;
+            if (mainImage && popupSrc) mainImage.src = popupSrc;
             if (mainImageLink && popupSrc) mainImageLink.href = popupSrc;
 
             thumbItems.forEach(function (t) { t.classList.remove('active'); });
@@ -83,10 +98,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     /* Lightbox using native <dialog> */
+    var productTitle = dataEl ? dataEl.getAttribute('data-product-title') : '';
     var dialog = document.createElement('dialog');
     dialog.id = 'product-lightbox';
     dialog.className = 'product-lightbox';
     dialog.innerHTML = ''
+        + '<div class="product-lightbox__inner">'
         + '<button class="product-lightbox__close" aria-label="Close">'
         + '<i class="material-icons">close</i>'
         + '</button>'
@@ -96,13 +113,20 @@ document.addEventListener('DOMContentLoaded', function () {
         + '<img class="product-lightbox__img" src="" alt="" />'
         + '<button class="product-lightbox__next" aria-label="Next">'
         + '<i class="material-icons">chevron_right</i>'
-        + '</button>';
+        + '</button>'
+        + '<div class="product-lightbox__caption">'
+        + '<span class="product-lightbox__title"></span>'
+        + '<span class="product-lightbox__counter"></span>'
+        + '</div>'
+        + '</div>';
     document.body.appendChild(dialog);
 
-    var lightboxImg   = dialog.querySelector('.product-lightbox__img');
-    var lightboxClose = dialog.querySelector('.product-lightbox__close');
-    var lightboxPrev  = dialog.querySelector('.product-lightbox__prev');
-    var lightboxNext  = dialog.querySelector('.product-lightbox__next');
+    var lightboxImg     = dialog.querySelector('.product-lightbox__img');
+    var lightboxClose   = dialog.querySelector('.product-lightbox__close');
+    var lightboxPrev    = dialog.querySelector('.product-lightbox__prev');
+    var lightboxNext    = dialog.querySelector('.product-lightbox__next');
+    var lightboxTitle   = dialog.querySelector('.product-lightbox__title');
+    var lightboxCounter = dialog.querySelector('.product-lightbox__counter');
 
     var galleryLinks = [];
     var currentLbIdx = 0;
@@ -116,6 +140,8 @@ document.addEventListener('DOMContentLoaded', function () {
         currentLbIdx = Math.max(0, Math.min(index, galleryLinks.length - 1));
         lightboxImg.src = galleryLinks[currentLbIdx].getAttribute('href');
         lightboxImg.alt = galleryLinks[currentLbIdx].getAttribute('title') || '';
+        lightboxTitle.textContent = productTitle;
+        lightboxCounter.textContent = (currentLbIdx + 1) + ' of ' + galleryLinks.length;
         dialog.showModal();
     }
 
@@ -181,6 +207,77 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (hidden) hidden.value = value;
                 }
             });
+        });
+    });
+
+    /* =================================================================
+       OPTION PRICE UPDATE — recalculate displayed prices on pill click
+       ================================================================= */
+
+    var basePrice   = parseFloat(dataEl ? dataEl.getAttribute('data-price-raw') : 0) || 0;
+    var baseSpecial = parseFloat(dataEl ? dataEl.getAttribute('data-special-raw') : 0) || 0;
+    var currLeft    = dataEl ? dataEl.getAttribute('data-currency-left') : '';
+    var currRight   = dataEl ? dataEl.getAttribute('data-currency-right') : '';
+
+    function formatPrice(num) {
+        var parts = num.toFixed(0).split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return currLeft + parts.join('.') + currRight;
+    }
+
+    function recalcPrices() {
+        var delta = 0;
+        document.querySelectorAll('.option-pill.active').forEach(function (pill) {
+            var raw    = parseFloat(pill.getAttribute('data-price-raw')) || 0;
+            var prefix = pill.getAttribute('data-price-prefix') || '+';
+            if (prefix === '-') delta -= raw; else delta += raw;
+        });
+
+        var newPrice   = basePrice + delta;
+        var newSpecial = baseSpecial ? baseSpecial + delta : 0;
+        var displayPrice = newSpecial || newPrice;
+
+        /* Info pill price */
+        var pricePill = document.querySelector('.info-pill__value--price');
+        if (pricePill) pricePill.textContent = formatPrice(displayPrice);
+
+        var oldPill = document.querySelector('.info-pill__value--old');
+        if (oldPill && newSpecial) oldPill.textContent = formatPrice(newPrice);
+
+        /* Regular price pill (second info pill showing "Regular Price:") */
+        var regPills = document.querySelectorAll('.info-pill');
+        regPills.forEach(function (pill) {
+            var label = pill.querySelector('.info-pill__label');
+            if (label && label.textContent.trim() === 'Regular Price:') {
+                var val = pill.querySelector('.info-pill__value');
+                if (val) val.textContent = formatPrice(newPrice);
+            }
+        });
+
+        /* Cash discount payment card */
+        var cashCard = document.getElementById('payment-cash');
+        if (cashCard) {
+            var cashAmount = cashCard.querySelector('.payment-card__amount');
+            if (cashAmount) cashAmount.textContent = formatPrice(displayPrice);
+            var cashOld = cashCard.querySelector('.payment-card__old');
+            if (cashOld && newSpecial) cashOld.textContent = formatPrice(newPrice);
+        }
+
+        /* EMI payment card */
+        var emiCard = document.getElementById('payment-emi');
+        if (emiCard) {
+            var emiAmount = emiCard.querySelector('.payment-card__amount');
+            var monthly = Math.ceil(newPrice / 12);
+            if (emiAmount) emiAmount.textContent = formatPrice(monthly) + '/month';
+            var emiLabel = emiCard.querySelector('.payment-card__label');
+            if (emiLabel) emiLabel.textContent = 'Regular Price: ' + formatPrice(newPrice);
+        }
+    }
+
+    /* Hook into existing pill click handlers */
+    document.querySelectorAll('.option-pill').forEach(function (pill) {
+        pill.addEventListener('click', function () {
+            setTimeout(recalcPrices, 0);
         });
     });
 

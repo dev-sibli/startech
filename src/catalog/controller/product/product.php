@@ -4,7 +4,7 @@ class ControllerProductProduct extends Controller {
 
 	public function index() {
 		$this->load->language('product/product');
-		$this->document->addStyle('catalog/view/theme/dreamer/stylesheet/product.css');
+		$this->document->addStyle('catalog/view/theme/dreamer/stylesheet/product.css?v=3');
 
 		$data['breadcrumbs'] = array();
 
@@ -235,7 +235,7 @@ class ControllerProductProduct extends Controller {
 			$this->document->setDescription($product_info['meta_description']);
 			$this->document->setKeywords($product_info['meta_keyword']);
 			$this->document->addLink($this->url->link('product/product', 'product_id=' . $this->request->get['product_id']), 'canonical');
-			$this->document->addScript('catalog/view/theme/dreamer/javascript/product.js', 'footer');
+			$this->document->addScript('catalog/view/theme/dreamer/javascript/product.js?v=3', 'footer');
 
 			$data['heading_title'] = $product_info['name'];
 
@@ -289,17 +289,24 @@ class ControllerProductProduct extends Controller {
 
 			if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
 				$data['price'] = $this->currency->format($this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				$data['price_raw'] = (float)$this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax'));
 			} else {
 				$data['price'] = false;
+				$data['price_raw'] = 0;
 			}
 
 			if (!is_null($product_info['special']) && (float)$product_info['special'] >= 0) {
 				$data['special'] = $this->currency->format($this->tax->calculate($product_info['special'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
+				$data['special_raw'] = (float)$this->tax->calculate($product_info['special'], $product_info['tax_class_id'], $this->config->get('config_tax'));
 				$tax_price = (float)$product_info['special'];
 			} else {
 				$data['special'] = false;
+				$data['special_raw'] = 0;
 				$tax_price = (float)$product_info['price'];
 			}
+
+			$data['currency_left'] = $this->currency->getSymbolLeft($this->session->data['currency']);
+			$data['currency_right'] = $this->currency->getSymbolRight($this->session->data['currency']);
 
 			if ($this->config->get('config_tax')) {
 				$data['tax'] = $this->currency->format($tax_price, $this->session->data['currency']);
@@ -327,8 +334,10 @@ class ControllerProductProduct extends Controller {
 					if (!$option_value['subtract'] || ($option_value['quantity'] > 0)) {
 						if ((($this->config->get('config_customer_price') && $this->customer->isLogged()) || !$this->config->get('config_customer_price')) && (float)$option_value['price']) {
 							$price = $this->currency->format($this->tax->calculate($option_value['price'], $product_info['tax_class_id'], $this->config->get('config_tax') ? 'P' : false), $this->session->data['currency']);
+							$price_raw = (float)$this->tax->calculate($option_value['price'], $product_info['tax_class_id'], $this->config->get('config_tax') ? 'P' : false);
 						} else {
 							$price = false;
+							$price_raw = 0;
 						}
 
 						$product_option_value_data[] = array(
@@ -337,6 +346,7 @@ class ControllerProductProduct extends Controller {
 							'name'                    => $option_value['name'],
 							'image'                   => $this->model_tool_image->resize($option_value['image'], 50, 50),
 							'price'                   => $price,
+							'price_raw'               => $price_raw,
 							'price_prefix'            => $option_value['price_prefix']
 						);
 					}

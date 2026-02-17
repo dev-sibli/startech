@@ -7,95 +7,210 @@
     {% endfor %}
   </ul>
 
+  <h1>Checkout</h1>
+
   {% if error_warning %}
   <div class="checkout-alert checkout-alert--danger">
-    <i class="material-icons">error_outline</i> {{ error_warning }}
-    <button class="checkout-alert__close" aria-label="Close">&times;</button>
+    {{ error_warning }}
   </div>
   {% endif %}
-
-  <h1><i class="material-icons">lock</i> Checkout</h1>
 
   <div class="checkout-layout"
        id="checkout-page"
        data-logged="{{ logged ? '1' : '0' }}"
-       data-shipping-required="{{ shipping_required ? '1' : '0' }}"
-       data-account="{{ account }}">
+       data-shipping-required="{{ shipping_required ? '1' : '0' }}">
 
-    {# ── Left: checkout sections ── #}
+    {# ── LEFT COLUMN ── #}
     <div class="checkout-main">
 
-      {# Login / account option (guests only) #}
-      {% if not logged %}
-      <div class="checkout-section" id="section-checkout-option">
-        <div class="checkout-section-header">
-          <span class="checkout-section-number">1</span>
-          <h3 class="checkout-section-title">{{ text_checkout_option }}</h3>
+      {# ── Shipping & Billing ── #}
+      <div class="checkout-card">
+        <div class="checkout-card-header">
+          <i class="material-icons" style="color:#ef4a23;">local_shipping</i>
+          <h2>Shipping &amp; Billing</h2>
         </div>
-        <div class="checkout-section-body" id="body-checkout-option"></div>
-      </div>
-      {% endif %}
-
-      {# Billing / Payment Address #}
-      <div class="checkout-section" id="section-payment-address">
-        <div class="checkout-section-header">
-          <span class="checkout-section-number">{% if logged %}1{% else %}2{% endif %}</span>
-          <h3 class="checkout-section-title" id="title-payment-address">
-            {% if not logged and account != 'guest' %}{{ text_checkout_account }}{% else %}{{ text_checkout_payment_address }}{% endif %}
-          </h3>
+        <div class="checkout-card-body">
+          <div class="checkout-form-grid">
+            <div class="form-group">
+              <label for="input-firstname">First Name</label>
+              <input type="text" name="firstname" id="input-firstname" class="form-control" placeholder="First Name*" value="{{ firstname }}" autocomplete="given-name">
+            </div>
+            <div class="form-group">
+              <label for="input-lastname">Last Name</label>
+              <input type="text" name="lastname" id="input-lastname" class="form-control" placeholder="Last Name*" value="{{ lastname }}" autocomplete="family-name">
+            </div>
+            <div class="form-group form-group--full">
+              <label for="input-address">Address</label>
+              <input type="text" name="address_1" id="input-address" class="form-control" placeholder="Address*" value="{{ address_1 }}" autocomplete="street-address">
+            </div>
+            <div class="form-group">
+              <label for="input-city">Upazila/Thana</label>
+              <input type="text" name="city" id="input-city" class="form-control" placeholder="Upazila/Thana*" value="{{ city }}" autocomplete="address-level2">
+            </div>
+            <div class="form-group">
+              <label for="input-zone">District</label>
+              <select name="zone_id" id="input-zone" class="form-control" autocomplete="address-level1">
+                <option value="">-- Select District --</option>
+                {% for zone in zones %}
+                <option value="{{ zone.zone_id }}"{% if zone.zone_id == zone_id %} selected{% endif %}>{{ zone.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="input-telephone">Mobile</label>
+              <input type="tel" name="telephone" id="input-telephone" class="form-control" placeholder="Telephone*" value="{{ telephone }}" autocomplete="tel">
+            </div>
+            <div class="form-group">
+              <label for="input-email">Email</label>
+              <input type="email" name="email" id="input-email" class="form-control" placeholder="E-Mail*" value="{{ email }}" autocomplete="email">
+            </div>
+            <div class="form-group form-group--full">
+              <label for="input-comment">Comment</label>
+              <textarea name="comment" id="input-comment" class="form-control" rows="3" placeholder="Any special requirement/instruction for us?"></textarea>
+            </div>
+          </div>
+          <input type="hidden" name="country_id" value="{{ country_id }}">
+          <input type="hidden" name="company" value="">
+          <input type="hidden" name="address_2" value="">
+          <input type="hidden" name="postcode" value="">
+          <input type="hidden" name="shipping_address" value="1">
         </div>
-        <div class="checkout-section-body" id="body-payment-address"></div>
-      </div>
-
-      {# Shipping Address #}
-      {% if shipping_required %}
-      <div class="checkout-section" id="section-shipping-address">
-        <div class="checkout-section-header">
-          <span class="checkout-section-number">{% if logged %}2{% else %}3{% endif %}</span>
-          <h3 class="checkout-section-title">{{ text_checkout_shipping_address }}</h3>
-        </div>
-        <div class="checkout-section-body" id="body-shipping-address"></div>
-      </div>
-
-      {# Shipping Method #}
-      <div class="checkout-section" id="section-shipping-method">
-        <div class="checkout-section-header">
-          <span class="checkout-section-number">{% if logged %}3{% else %}4{% endif %}</span>
-          <h3 class="checkout-section-title">{{ text_checkout_shipping_method }}</h3>
-        </div>
-        <div class="checkout-section-body" id="body-shipping-method"></div>
-      </div>
-      {% endif %}
-
-      {# Payment Method #}
-      <div class="checkout-section" id="section-payment-method">
-        <div class="checkout-section-header">
-          <span class="checkout-section-number">{% if shipping_required %}{% if logged %}4{% else %}5{% endif %}{% else %}{% if logged %}2{% else %}3{% endif %}{% endif %}</span>
-          <h3 class="checkout-section-title">{{ text_checkout_payment_method }}</h3>
-        </div>
-        <div class="checkout-section-body" id="body-payment-method"></div>
-      </div>
-
-      {# Confirm #}
-      <div class="checkout-section" id="section-checkout-confirm">
-        <div class="checkout-section-header">
-          <span class="checkout-section-number">{% if shipping_required %}{% if logged %}5{% else %}6{% endif %}{% else %}{% if logged %}3{% else %}4{% endif %}{% endif %}</span>
-          <h3 class="checkout-section-title">{{ text_checkout_confirm }}</h3>
-        </div>
-        <div class="checkout-section-body" id="body-checkout-confirm"></div>
       </div>
 
-    </div>
-
-    {# ── Right: order summary sidebar ── #}
-    <div class="checkout-sidebar">
-      <div class="checkout-sidebar-box">
-        <h3 class="checkout-sidebar-title">Order Summary</h3>
-        <div id="checkout-order-summary">
-          <div class="checkout-sidebar-loading">
-            <i class="material-icons">hourglass_empty</i> Loading...
+      {# ── Payment & Delivery Methods ── #}
+      <div class="checkout-methods-row">
+        {# Payment Method #}
+        <div class="checkout-card">
+          <div class="checkout-card-header">
+            <i class="material-icons">payment</i>
+            <h2>Payment Method</h2>
+          </div>
+          <div class="checkout-card-body">
+            <p class="checkout-method-label">Select a payment method</p>
+            {% set first_payment = true %}
+            {% for code, method in payment_methods %}
+            <label class="method-option">
+              <input type="radio" name="payment_method" value="{{ code }}"{% if first_payment %} checked{% set first_payment = false %}{% endif %}>
+              <span class="method-option-text">{{ method.title }}</span>
+            </label>
+            {% endfor %}
+            {% if payment_methods is empty %}
+            <p class="text-danger">No payment methods available.</p>
+            {% endif %}
           </div>
         </div>
+
+        {# Delivery Method #}
+        {% if shipping_required %}
+        <div class="checkout-card">
+          <div class="checkout-card-header">
+            <i class="material-icons">local_shipping</i>
+            <h2>Delivery Method</h2>
+          </div>
+          <div class="checkout-card-body">
+            <p class="checkout-method-label">Select a delivery method</p>
+            {% set first_shipping = true %}
+            {% for code, method in shipping_methods %}
+              {% for quote_code, quote in method.quote %}
+              <label class="method-option">
+                <input type="radio" name="shipping_method" value="{{ quote.code }}"{% if first_shipping %} checked{% set first_shipping = false %}{% endif %}>
+                <span class="method-option-text">{{ quote.title }}{% if quote.text %} - {{ quote.text }}{% endif %}</span>
+              </label>
+              {% endfor %}
+            {% endfor %}
+            {% if shipping_methods is empty %}
+            <p class="text-danger">No shipping methods available.</p>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      {# ── Products ── #}
+      <div class="checkout-card">
+        <div class="checkout-card-header">
+          <i class="material-icons">inventory_2</i>
+          <h2>Products</h2>
+        </div>
+        <div class="checkout-card-body">
+          {% for product in products %}
+          <div class="checkout-product-row">
+            <div class="checkout-product-info">
+              <span class="checkout-product-qty">{{ product.quantity }} X</span>
+              <a href="{{ product.href }}">{{ product.name }}</a>
+              {% for option in product.option %}
+              <small class="checkout-product-option">{{ option.name }}: {{ option.value }}</small>
+              {% endfor %}
+            </div>
+            <div class="checkout-product-price">{{ product.total }}</div>
+          </div>
+          {% endfor %}
+          {% for voucher in vouchers %}
+          <div class="checkout-product-row">
+            <div class="checkout-product-info">1 X {{ voucher.description }}</div>
+            <div class="checkout-product-price">{{ voucher.amount }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ── RIGHT SIDEBAR ── #}
+    <div class="checkout-sidebar">
+      <div class="checkout-sidebar-box">
+        <h3 class="checkout-sidebar-title">
+          <i class="material-icons">receipt_long</i> Order Summary
+        </h3>
+
+        {# Coupon / Voucher promo section #}
+        <div class="promo-section">
+          <h4>Get Some Extra</h4>
+          <p>Use coupon/voucher/star points</p>
+          <div class="promo-tabs">
+            <button type="button" class="promo-tab active" data-tab="coupon">
+              <i class="material-icons">confirmation_number</i> Coupon
+            </button>
+            <button type="button" class="promo-tab" data-tab="voucher">
+              <i class="material-icons">card_giftcard</i> Gift Voucher
+            </button>
+          </div>
+          <div class="promo-tab-content active" id="promo-coupon">
+            <div class="promo-input-row">
+              <input type="text" name="coupon" id="input-coupon" class="form-control" placeholder="Promo / Coupon Code">
+              <button type="button" id="btn-coupon" class="btn-apply">Apply</button>
+            </div>
+          </div>
+          <div class="promo-tab-content" id="promo-voucher">
+            <div class="promo-input-row">
+              <input type="text" name="voucher" id="input-voucher" class="form-control" placeholder="Gift Voucher Code">
+              <button type="button" id="btn-voucher" class="btn-apply">Apply</button>
+            </div>
+          </div>
+        </div>
+
+        {# Totals #}
+        <div class="summary-totals" id="summary-totals">
+          {% for total in totals %}
+          <div class="summary-row{% if total.code == 'total' %} summary-row--total{% endif %}">
+            <span>{{ total.title }}:</span>
+            <span>{{ total.text }}</span>
+          </div>
+          {% endfor %}
+        </div>
+
+        {# Terms #}
+        {% if text_agree %}
+        <label class="checkout-agree">
+          <input type="checkbox" name="agree" value="1" id="input-agree" checked>
+          <span>{{ text_agree }}</span>
+        </label>
+        {% endif %}
+
+        {# Error display #}
+        <div id="checkout-errors" class="checkout-errors-box" style="display:none;"></div>
+
+        {# Confirm Order #}
+        <button type="button" id="btn-confirm-order" class="btn-confirm">Confirm Order</button>
       </div>
     </div>
 
