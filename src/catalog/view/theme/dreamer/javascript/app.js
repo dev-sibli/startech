@@ -432,112 +432,148 @@ var compare = {
    API: initAutocomplete(inputEl, { source: fn(val, cb), select: fn(item) })
    ===================================================================== */
 
-function initAutocomplete(inputEl, options) {
+function initSearchAutocomplete(inputEl) {
     inputEl.setAttribute('autocomplete', 'off');
 
-    var items = {};
     var timer = null;
+    var activeTab = 'products';
 
-    var dropdown = document.createElement('ul');
-    dropdown.className = 'dropdown-menu autocomplete-results';
+    var dropdown = document.createElement('div');
+    dropdown.className = 'ac-dropdown';
     dropdown.style.display = 'none';
     inputEl.insertAdjacentElement('afterend', dropdown);
 
-    function hide() {
-        dropdown.style.display = 'none';
+    function hide() { dropdown.style.display = 'none'; }
+    function show() { dropdown.style.display = 'block'; }
+
+    function buildProductItem(p) {
+        var priceHtml = '';
+        if (p.in_stock) {
+            if (p.special) {
+                priceHtml = '<span class="ac-price">' + p.special + ' <del>' + p.price + '</del></span>';
+            } else {
+                priceHtml = '<span class="ac-price">' + p.price + '</span>';
+            }
+        } else {
+            priceHtml = '<span class="ac-stock-status">' + p.stock_status + '</span>';
+        }
+        return '<div class="ac-item" data-href="' + p.href + '">'
+            + '<img src="' + p.thumb + '" alt="" class="ac-thumb" />'
+            + '<div class="ac-info">'
+            + '<span class="ac-name">' + p.name + '</span>'
+            + priceHtml
+            + '</div></div>';
     }
 
-    function show() {
-        dropdown.style.display = 'block';
+    function buildCategoryItem(c) {
+        return '<div class="ac-item ac-cat-item" data-href="' + c.href + '">'
+            + '<i class="material-icons">folder</i>'
+            + '<span class="ac-name">' + c.name + '</span>'
+            + '</div>';
+    }
+
+    function render(json) {
+        var products = json.products || [];
+        var categories = json.categories || [];
+
+        if (!products.length && !categories.length) {
+            hide();
+            return;
+        }
+
+        var html = '<div class="ac-tabs">'
+            + '<button type="button" class="ac-tab' + (activeTab === 'products' ? ' active' : '') + '" data-tab="products">Products</button>'
+            + '<button type="button" class="ac-tab' + (activeTab === 'categories' ? ' active' : '') + '" data-tab="categories">Categories</button>'
+            + '</div>';
+
+        html += '<div class="ac-tab-content" data-panel="products"' + (activeTab !== 'products' ? ' style="display:none"' : '') + '>';
+        if (products.length) {
+            products.forEach(function (p) { html += buildProductItem(p); });
+        } else {
+            html += '<div class="ac-empty">No products found</div>';
+        }
+        html += '</div>';
+
+        html += '<div class="ac-tab-content" data-panel="categories"' + (activeTab !== 'categories' ? ' style="display:none"' : '') + '>';
+        if (categories.length) {
+            categories.forEach(function (c) { html += buildCategoryItem(c); });
+        } else {
+            html += '<div class="ac-empty">No categories found</div>';
+        }
+        html += '</div>';
+
+        var base = document.querySelector('base') ? document.querySelector('base').getAttribute('href') : '';
+        html += '<div class="ac-footer"><a href="' + base + 'index.php?route=product/search&search=' + encodeURIComponent(inputEl.value) + '">See all results</a></div>';
+
+        dropdown.innerHTML = html;
+        show();
     }
 
     function request() {
         clearTimeout(timer);
         timer = setTimeout(function () {
-            options.source(inputEl.value, function (json) {
-                items = {};
-                var html = '';
-
-                if (json.length && json[0].thumb !== undefined) {
-                    /* Rich product card mode (search autocomplete) */
-                    json.forEach(function (item) {
-                        items[item.value] = item;
-                        html += '<li data-value="' + item.value + '" data-href="' + (item.href || item.value) + '">'
-                            + '<img src="' + item.thumb + '" alt="" class="ac-thumb" />'
-                            + '<div class="ac-info">'
-                            + '<span class="ac-name">' + item.label + '</span>'
-                            + (item.stock
-                                ? '<span class="ac-price">' + item.price + '</span>'
-                                : '<span class="ac-oos">Out of Stock</span>')
-                            + '</div></li>';
-                    });
-                    /* "View all results" footer row */
-                    html += '<li class="ac-footer-row" data-value="__all__">'
-                        + 'View all results <span style="margin-left:4px">&#8594;</span></li>';
-                } else {
-                    /* Plain text mode (fallback / category autocomplete) */
-                    var categories = {};
-                    json.forEach(function (item) {
-                        items[item.value] = item;
-                        if (!item.category) {
-                            html += '<li data-value="' + item.value + '"><a href="#">' + item.label + '</a></li>';
-                        } else {
-                            if (!categories[item.category]) categories[item.category] = [];
-                            categories[item.category].push(item);
-                        }
-                    });
-                    Object.keys(categories).forEach(function (name) {
-                        html += '<li class="dropdown-header">' + name + '</li>';
-                        categories[name].forEach(function (item) {
-                            html += '<li data-value="' + item.value + '"><a href="#">&nbsp;&nbsp;&nbsp;' + item.label + '</a></li>';
-                        });
-                    });
-                }
-
-                dropdown.innerHTML = html;
-
-                if (html) {
-                    show();
-                } else {
-                    hide();
-                }
-            });
+            var val = inputEl.value;
+            if (val.length < 2) { hide(); return; }
+            fetch('index.php?route=product/search/autocomplete&filter_name=' + encodeURIComponent(val))
+                .then(function (r) { return r.json(); })
+                .then(render)
+                .catch(function () { hide(); });
         }, 200);
     }
 
-    inputEl.addEventListener('focus', request);
+    inputEl.addEventListener('focus', function () {
+        if (inputEl.value.length >= 2) request();
+    });
     inputEl.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             hide();
-        } else {
+        } else if (e.key !== 'Enter') {
             request();
         }
     });
-    inputEl.addEventListener('blur', function () {
-        setTimeout(hide, 200);
+
+    /* Close only when clicking outside search box + dropdown */
+    document.addEventListener('mousedown', function (e) {
+        var searchBox = inputEl.closest('#search');
+        if (searchBox && !searchBox.contains(e.target)) {
+            hide();
+        }
+    });
+
+    /* Prevent input blur when clicking inside dropdown */
+    dropdown.addEventListener('mousedown', function (e) {
+        e.preventDefault();
     });
 
     dropdown.addEventListener('click', function (e) {
-        e.preventDefault();
-        var li = e.target.closest('li[data-value]');
-        if (li) {
-            var val = li.getAttribute('data-value');
-            if (val === '__all__') {
-                /* Navigate to search results page */
-                var base = document.querySelector('base') ? document.querySelector('base').getAttribute('href') : '';
-                location.href = base + 'index.php?route=product/search&search=' + encodeURIComponent(inputEl.value);
-                hide();
-                return;
-            }
-            if (val && items[val]) {
-                options.select(items[val]);
-                hide();
-            } else if (val) {
-                /* For rich cards: navigate via data-href */
-                var href = li.getAttribute('data-href');
-                if (href) location.href = href;
-                hide();
-            }
+        /* Tab switching */
+        var tab = e.target.closest('.ac-tab');
+        if (tab) {
+            e.preventDefault();
+            activeTab = tab.getAttribute('data-tab');
+            dropdown.querySelectorAll('.ac-tab').forEach(function (t) { t.classList.remove('active'); });
+            tab.classList.add('active');
+            dropdown.querySelectorAll('.ac-tab-content').forEach(function (p) {
+                p.style.display = p.getAttribute('data-panel') === activeTab ? '' : 'none';
+            });
+            inputEl.focus();
+            return;
+        }
+
+        /* Item click */
+        var item = e.target.closest('.ac-item[data-href]');
+        if (item) {
+            e.preventDefault();
+            location.href = item.getAttribute('data-href');
+            hide();
+            return;
+        }
+
+        /* Footer link */
+        var footer = e.target.closest('.ac-footer a');
+        if (footer) {
+            /* default link navigation */
+            return;
         }
     });
 }
@@ -602,21 +638,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    /* --- Search autocomplete (rich product dropdown) --- */
+    /* --- Search autocomplete (tabbed product + category dropdown) --- */
     var searchAcInput = document.querySelector('#search input[name="search"]');
     if (searchAcInput) {
-        initAutocomplete(searchAcInput, {
-            source: function (val, cb) {
-                if (val.length < 2) { cb([]); return; }
-                fetch('index.php?route=product/search/autocomplete&filter_name=' + encodeURIComponent(val))
-                    .then(function (r) { return r.json(); })
-                    .then(cb)
-                    .catch(function () { cb([]); });
-            },
-            select: function (item) {
-                location.href = item.href || item.value;
-            }
-        });
+        initSearchAutocomplete(searchAcInput);
     }
 
     /* --- Dropdown menu overflow fix (replaces menu offset calculation) --- */

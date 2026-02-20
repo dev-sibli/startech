@@ -29,8 +29,9 @@ class ControllerCommonHeader extends Controller {
 		// functions (cart, wishlist, compare, initCustomSlideshow, etc.) that
 		// inline onclick handlers and page-specific scripts depend on.
 		$this->document->addScript('catalog/view/javascript/jquery/jquery-3.7.1.min.js', 'header');
-		$this->document->addScript('catalog/view/theme/dreamer/javascript/app.js?v=2', 'header');
+		$this->document->addScript('catalog/view/theme/dreamer/javascript/app.js?v=3', 'header');
 		$this->document->addScript('catalog/view/theme/dreamer/javascript/site.js', 'header');
+		$this->document->addStyle('catalog/view/theme/dreamer/stylesheet/search.css');
 
 		$data['title'] = $this->document->getTitle();
 

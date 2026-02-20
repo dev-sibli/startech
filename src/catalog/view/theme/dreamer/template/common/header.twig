@@ -20,7 +20,7 @@
 {# jQuery, Bootstrap, Font Awesome, and Google Fonts are intentionally not loaded here.
    jQuery is registered as a header-position script via header.php for extension compatibility.
    Bootstrap and Font Awesome are replaced by the Dreamer theme's custom CSS and Material Icons. #}
-<link href="/catalog/view/theme/dreamer/stylesheet/main.css?v=7" rel="stylesheet">
+<link href="/catalog/view/theme/dreamer/stylesheet/main.css?v=9" rel="stylesheet">
 {% for style in styles %}
 <link href="{{ style.href }}" type="text/css" rel="{{ style.rel }}" media="{{ style.media }}" />
 {% endfor %}
@@ -44,7 +44,7 @@
         <div class="logo-wrapper">
           <div id="logo">
             {% if logo %}
-            <a href="{{ home }}"><img src="{{ logo }}" title="{{ name }}" alt="{{ name }}" /></a>
+            <a href="/"><img src="{{ logo }}" title="{{ name }}" alt="{{ name }}" /></a>
             {% else %}
             <h1><a href="{{ home }}">{{ name }}</a></h1>
             {% endif %}

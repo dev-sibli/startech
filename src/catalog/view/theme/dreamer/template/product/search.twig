@@ -1,0 +1,113 @@
+{{ header }}
+<div id="product-search" class="container">
+
+  {% if breadcrumbs %}
+  <ul class="breadcrumb">
+    {% for breadcrumb in breadcrumbs %}
+    <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if related_categories %}
+  <div class="category-subcats">
+    {% for cat in related_categories %}
+    <a href="{{ cat.href }}" class="subcat-pill">{{ cat.name }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div id="content">
+    {% if products %}
+
+    <div class="category-toolbar">
+      <h2 class="toolbar-title">Search - {{ search }}</h2>
+      <div class="toolbar-right">
+        <div class="toolbar-limit">
+          <label for="input-limit">Show:</label>
+          <select id="input-limit" class="toolbar-select" onchange="location = this.value;">
+            {% for lim in limits %}
+            <option value="{{ lim.href }}" {% if lim.value == limit %}selected{% endif %}>{{ lim.text }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="toolbar-sort">
+          <label for="input-sort">Sort By:</label>
+          <select id="input-sort" class="toolbar-select" onchange="location = this.value;">
+            {% for s in sorts %}
+            <option value="{{ s.href }}" {% if s.value == '%s-%s'|format(sort, order) %}selected{% endif %}>{{ s.text }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="product-grid-container">
+      {% for product in products %}
+      <div class="product-layout product-grid">
+        <div class="product-thumb">
+          <div class="image">
+            {% if product.save_amount and product.in_stock %}<span class="badge-save">Save: {{ product.save_amount }}</span>{% endif %}
+            <a href="{{ product.href }}">
+              <img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}" />
+            </a>
+          </div>
+          <div class="caption">
+            <h4><a href="{{ product.href }}">{{ product.name }}</a></h4>
+            {% if product.description %}<p class="product-desc">{{ product.description }}</p>{% endif %}
+
+            {% if product.in_stock %}
+              {% if product.price %}
+              <p class="price">
+                {% if product.special %}
+                <span class="price-new">{{ product.special }}</span>
+                <span class="price-old">{{ product.price }}</span>
+                {% else %}
+                {{ product.price }}
+                {% endif %}
+              </p>
+              {% endif %}
+            {% else %}
+              <p class="stock-status-label">{{ product.stock_status }}</p>
+            {% endif %}
+          </div>
+          <div class="button-group">
+            {% if product.in_stock %}
+            <button type="button" class="btn-cart" onclick="cart.add('{{ product.product_id }}', '{{ product.minimum }}');">
+              <i class="material-icons">shopping_cart</i>
+              <span>Buy Now</span>
+            </button>
+            {% else %}
+            <button type="button" class="btn-cart btn-cart-disabled" disabled>
+              <span>{{ product.stock_status }}</span>
+            </button>
+            {% endif %}
+            <button type="button" class="btn-compare-text" onclick="compare.add('{{ product.product_id }}');">
+              <i class="material-icons">library_add</i> Add to Compare
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="category-pagination">
+      <div id="pagination-wrapper">{{ pagination }}</div>
+      <div class="result-count">{{ results }}</div>
+    </div>
+
+    {% else %}
+    <div class="search-empty">
+      {% if search %}
+      <h2 class="toolbar-title">Search - {{ search }}</h2>
+      <p class="search-no-results">No products matched your search for "<strong>{{ search }}</strong>".</p>
+      {% else %}
+      <h2 class="toolbar-title">Search</h2>
+      <p class="search-no-results">Please enter a search term.</p>
+      {% endif %}
+      <a href="{{ continue }}" class="btn-continue">Continue</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{{ footer }}

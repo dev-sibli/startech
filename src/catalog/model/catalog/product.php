@@ -56,8 +56,49 @@ class ModelCatalogProduct extends Model {
 		}
 	}
 
+	private function buildFulltextSearch($filter_name) {
+		$words = explode(' ', trim(preg_replace('/\s+/', ' ', $filter_name)));
+		$min_len = 3;
+		$long_words = array_filter($words, function($w) use ($min_len) { return mb_strlen($w) >= $min_len; });
+
+		if ($long_words) {
+			$ft_terms = array();
+			foreach ($long_words as $w) {
+				$ft_terms[] = '+' . $this->db->escape($w) . '*';
+			}
+			$ft_expr = implode(' ', $ft_terms);
+			$sql = "MATCH(pd.name, pd.tag) AGAINST('" . $ft_expr . "' IN BOOLEAN MODE)";
+
+			$like_parts = array();
+			$short_words = array_filter($words, function($w) use ($min_len) { return mb_strlen($w) < $min_len; });
+			foreach ($short_words as $w) {
+				$like_parts[] = "pd.name LIKE '%" . $this->db->escape($w) . "%'";
+			}
+
+			if ($like_parts) {
+				return '(' . $sql . ' AND ' . implode(' AND ', $like_parts) . ')';
+			}
+			return $sql;
+		}
+
+		$like_parts = array();
+		foreach ($words as $w) {
+			$like_parts[] = "pd.name LIKE '%" . $this->db->escape($w) . "%'";
+		}
+		return implode(' AND ', $like_parts);
+	}
+
 	public function getProducts($data = array()) {
-		$sql = "SELECT p.product_id, (SELECT AVG(rating) AS total FROM " . DB_PREFIX . "review r1 WHERE r1.product_id = p.product_id AND r1.status = '1' GROUP BY r1.product_id) AS rating, (SELECT price FROM " . DB_PREFIX . "product_discount pd2 WHERE pd2.product_id = p.product_id AND pd2.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND pd2.quantity = '1' AND ((pd2.date_start = '0000-00-00' OR pd2.date_start < NOW()) AND (pd2.date_end = '0000-00-00' OR pd2.date_end > NOW())) ORDER BY pd2.priority ASC, pd2.price ASC LIMIT 1) AS discount, (SELECT price FROM " . DB_PREFIX . "product_special ps WHERE ps.product_id = p.product_id AND ps.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND ((ps.date_start = '0000-00-00' OR ps.date_start < NOW()) AND (ps.date_end = '0000-00-00' OR ps.date_end > NOW())) ORDER BY ps.priority ASC, ps.price ASC LIMIT 1) AS special";
+		$use_fulltext = !empty($data['filter_fulltext']) && !empty($data['filter_name']);
+
+		$sql = "SELECT p.product_id";
+
+		if ($use_fulltext) {
+			$ft_select = $this->buildFulltextSearch($data['filter_name']);
+			$sql .= ", (" . $ft_select . ") AS ft_relevance";
+		}
+
+		$sql .= ", (SELECT AVG(rating) AS total FROM " . DB_PREFIX . "review r1 WHERE r1.product_id = p.product_id AND r1.status = '1' GROUP BY r1.product_id) AS rating, (SELECT price FROM " . DB_PREFIX . "product_discount pd2 WHERE pd2.product_id = p.product_id AND pd2.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND pd2.quantity = '1' AND ((pd2.date_start = '0000-00-00' OR pd2.date_start < NOW()) AND (pd2.date_end = '0000-00-00' OR pd2.date_end > NOW())) ORDER BY pd2.priority ASC, pd2.price ASC LIMIT 1) AS discount, (SELECT price FROM " . DB_PREFIX . "product_special ps WHERE ps.product_id = p.product_id AND ps.customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND ((ps.date_start = '0000-00-00' OR ps.date_start < NOW()) AND (ps.date_end = '0000-00-00' OR ps.date_end > NOW())) ORDER BY ps.priority ASC, ps.price ASC LIMIT 1) AS special";
 
 		if (!empty($data['filter_category_id'])) {
 			if (!empty($data['filter_sub_category'])) {
@@ -101,16 +142,20 @@ class ModelCatalogProduct extends Model {
 			$sql .= " AND (";
 
 			if (!empty($data['filter_name'])) {
-				$implode = array();
+				if ($use_fulltext) {
+					$sql .= " " . $this->buildFulltextSearch($data['filter_name']);
+				} else {
+					$implode = array();
 
-				$words = explode(' ', trim(preg_replace('/\s+/', ' ', $data['filter_name'])));
+					$words = explode(' ', trim(preg_replace('/\s+/', ' ', $data['filter_name'])));
 
-				foreach ($words as $word) {
-					$implode[] = "pd.name LIKE '%" . $this->db->escape($word) . "%'";
-				}
+					foreach ($words as $word) {
+						$implode[] = "pd.name LIKE '%" . $this->db->escape($word) . "%'";
+					}
 
-				if ($implode) {
-					$sql .= " " . implode(" AND ", $implode) . "";
+					if ($implode) {
+						$sql .= " " . implode(" AND ", $implode) . "";
+					}
 				}
 
 				if (!empty($data['filter_description'])) {
@@ -123,16 +168,20 @@ class ModelCatalogProduct extends Model {
 			}
 
 			if (!empty($data['filter_tag'])) {
-				$implode = array();
+				if ($use_fulltext) {
+					$sql .= " " . $this->buildFulltextSearch($data['filter_tag']);
+				} else {
+					$implode = array();
 
-				$words = explode(' ', trim(preg_replace('/\s+/', ' ', $data['filter_tag'])));
+					$words = explode(' ', trim(preg_replace('/\s+/', ' ', $data['filter_tag'])));
 
-				foreach ($words as $word) {
-					$implode[] = "pd.tag LIKE '%" . $this->db->escape($word) . "%'";
-				}
+					foreach ($words as $word) {
+						$implode[] = "pd.tag LIKE '%" . $this->db->escape($word) . "%'";
+					}
 
-				if ($implode) {
-					$sql .= " " . implode(" AND ", $implode) . "";
+					if ($implode) {
+						$sql .= " " . implode(" AND ", $implode) . "";
+					}
 				}
 			}
 
@@ -191,6 +240,8 @@ class ModelCatalogProduct extends Model {
 			} else {
 				$sql .= " ORDER BY " . $data['sort'];
 			}
+		} elseif ($use_fulltext) {
+			$sql .= " ORDER BY ft_relevance DESC, p.sort_order";
 		} else {
 			$sql .= " ORDER BY p.sort_order";
 		}
@@ -434,6 +485,8 @@ class ModelCatalogProduct extends Model {
 	}
 
 	public function getTotalProducts($data = array()) {
+		$use_fulltext = !empty($data['filter_fulltext']) && !empty($data['filter_name']);
+
 		$sql = "SELECT COUNT(DISTINCT p.product_id) AS total";
 
 		if (!empty($data['filter_category_id'])) {
@@ -478,16 +531,20 @@ class ModelCatalogProduct extends Model {
 			$sql .= " AND (";
 
 			if (!empty($data['filter_name'])) {
-				$implode = array();
+				if ($use_fulltext) {
+					$sql .= " " . $this->buildFulltextSearch($data['filter_name']);
+				} else {
+					$implode = array();
 
-				$words = explode(' ', trim(preg_replace('/\s+/', ' ', $data['filter_name'])));
+					$words = explode(' ', trim(preg_replace('/\s+/', ' ', $data['filter_name'])));
 
-				foreach ($words as $word) {
-					$implode[] = "pd.name LIKE '%" . $this->db->escape($word) . "%'";
-				}
+					foreach ($words as $word) {
+						$implode[] = "pd.name LIKE '%" . $this->db->escape($word) . "%'";
+					}
 
-				if ($implode) {
-					$sql .= " " . implode(" AND ", $implode) . "";
+					if ($implode) {
+						$sql .= " " . implode(" AND ", $implode) . "";
+					}
 				}
 
 				if (!empty($data['filter_description'])) {
@@ -500,16 +557,20 @@ class ModelCatalogProduct extends Model {
 			}
 
 			if (!empty($data['filter_tag'])) {
-				$implode = array();
+				if ($use_fulltext) {
+					$sql .= " " . $this->buildFulltextSearch($data['filter_tag']);
+				} else {
+					$implode = array();
 
-				$words = explode(' ', trim(preg_replace('/\s+/', ' ', $data['filter_tag'])));
+					$words = explode(' ', trim(preg_replace('/\s+/', ' ', $data['filter_tag'])));
 
-				foreach ($words as $word) {
-					$implode[] = "pd.tag LIKE '%" . $this->db->escape($word) . "%'";
-				}
+					foreach ($words as $word) {
+						$implode[] = "pd.tag LIKE '%" . $this->db->escape($word) . "%'";
+					}
 
-				if ($implode) {
-					$sql .= " " . implode(" AND ", $implode) . "";
+					if ($implode) {
+						$sql .= " " . implode(" AND ", $implode) . "";
+					}
 				}
 			}
 

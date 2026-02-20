@@ -297,10 +297,10 @@ input {
     display: flex;
     background: #fff;
     border-radius: 4px;
-    overflow: hidden;
+    overflow: visible;
     height: 42px;
     border: 1px solid #ddd;
-    /* Added subtle border for white-on-white visual if needed, but header is dark so ok */
+    position: relative;
 }
 
 #search input {
@@ -939,118 +939,6 @@ input {
     font-size: 14px;
     line-height: 1.6;
     color: #444;
-}
-
-/* ===== AUTOCOMPLETE DROPDOWN (app.js) ===== */
-.autocomplete-results {
-    position: absolute;
-    z-index: 9000;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 0 0 6px 6px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
-    min-width: 340px;
-    max-width: 520px;
-    max-height: 400px;
-    overflow-y: auto;
-    list-style: none;
-    padding: 4px 0;
-    margin: 0;
-}
-
-/* Rich product card rows */
-.autocomplete-results li {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-
-.autocomplete-results li:hover,
-.autocomplete-results li:focus {
-    background: #f8f8f8;
-}
-
-.ac-thumb {
-    width: 48px;
-    height: 48px;
-    object-fit: contain;
-    flex-shrink: 0;
-    border: 1px solid #eee;
-    border-radius: 3px;
-    background: #fafafa;
-}
-
-.ac-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.ac-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: #333;
-    display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.ac-price {
-    font-size: 12px;
-    color: #ef4a23;
-    font-weight: 600;
-    display: block;
-    margin-top: 2px;
-}
-
-.ac-oos {
-    font-size: 11px;
-    color: #e74c3c;
-    font-weight: 600;
-    background: #fdf2f2;
-    padding: 1px 6px;
-    border-radius: 3px;
-    display: inline-block;
-    margin-top: 2px;
-}
-
-.ac-footer-row {
-    justify-content: center;
-    border-top: 1px solid #eee;
-    color: #ef4a23;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 10px 12px;
-}
-
-/* Plain text mode (non-product autocomplete) */
-.autocomplete-results li a {
-    display: block;
-    padding: 8px 15px;
-    font-size: 13px;
-    color: #333;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: 1;
-}
-
-.autocomplete-results li a:hover {
-    color: #ef4a23;
-}
-
-.autocomplete-results .dropdown-header {
-    padding: 6px 15px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #aaa;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-top: 1px solid #f0f0f0;
-    display: block;
 }
 
 /* ===== STICKY HEADER (app.js) ===== */

@@ -61,6 +61,20 @@ class ModelCatalogCategory extends Model {
 		}
 	}
 
+	public function searchCategories($keyword, $limit = 5) {
+		$words = array_filter(explode(' ', trim(preg_replace('/\s+/', ' ', $keyword))));
+		if (!$words) return array();
+
+		$conditions = array();
+		foreach ($words as $word) {
+			$conditions[] = "cd.name LIKE '%" . $this->db->escape($word) . "%'";
+		}
+
+		$query = $this->db->query("SELECT c.category_id, cd.name, c.parent_id, (SELECT cd2.name FROM " . DB_PREFIX . "category_description cd2 WHERE cd2.category_id = c.parent_id AND cd2.language_id = '" . (int)$this->config->get('config_language_id') . "') AS parent_name FROM " . DB_PREFIX . "category c LEFT JOIN " . DB_PREFIX . "category_description cd ON (c.category_id = cd.category_id) LEFT JOIN " . DB_PREFIX . "category_to_store c2s ON (c.category_id = c2s.category_id) WHERE (" . implode(" OR ", $conditions) . ") AND cd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND c2s.store_id = '" . (int)$this->config->get('config_store_id') . "' AND c.status = '1' ORDER BY LCASE(cd.name) LIMIT " . (int)$limit);
+
+		return $query->rows;
+	}
+
 	public function getTotalCategoriesByCategoryId($parent_id = 0) {
 		$query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "category c LEFT JOIN " . DB_PREFIX . "category_to_store c2s ON (c.category_id = c2s.category_id) WHERE c.parent_id = '" . (int)$parent_id . "' AND c2s.store_id = '" . (int)$this->config->get('config_store_id') . "' AND c.status = '1'");
 
